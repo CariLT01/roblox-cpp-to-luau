@@ -1,0 +1,8 @@
+# Ignore everything inside the dist folder
+dist/
+
+# Ignore the .old file or folder in the pipeline directory
+pipeline/.old
+
+# Ignore the specific data.json file
+pipeline/preprocess/data.json
