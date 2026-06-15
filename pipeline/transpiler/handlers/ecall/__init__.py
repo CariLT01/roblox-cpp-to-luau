@@ -1,5 +1,7 @@
 """ecall instruction handler — dispatches to helper functions by syscall/function."""
 
+import re
+
 from ._helpers import (
     _emit_new_part, _emit_find_child, _emit_getprop,
     _emit_getprop_vec3, _emit_setprop_vec3,
@@ -15,7 +17,8 @@ def _handle_ecall(handler_body, current_func, addr_int,
                   tracked_a1_rodata_str, tracked_a2_rodata_str,
                   tracked_a3_literal, tracked_a3_rodata_str,
                   tracked_a4_rodata_str, tracked_a5_literal,
-                  tracked_a5_rodata_str, tracked_a2_literal):
+                  tracked_a5_rodata_str, tracked_a2_literal,
+                  validate=False):
     """Generate ecall handler body based on function context and syscall number."""
 
     is_print_str = current_func and "printEPKc" in current_func
@@ -49,6 +52,7 @@ def _handle_ecall(handler_body, current_func, addr_int,
     is_free = current_func and "free" in current_func
     is_heap_used = current_func and "heapUsed" in current_func
     is_create_instance = current_func and "createInstance" in current_func
+    is_get_global = current_func and "getGlobal" in current_func
     is_get_workspace = current_func and "getWorkspace" in current_func
     is_get_players = current_func and "getPlayers" in current_func
     is_get_local_player = current_func and "getLocalPlayer" in current_func
@@ -59,6 +63,7 @@ def _handle_ecall(handler_body, current_func, addr_int,
     is_task_defer = current_func and "taskDefer" in current_func
     is_call_method = current_func and "callMethod" in current_func
     is_get_method = current_func and "getMethod" in current_func
+    is_require = current_func and "require" in current_func
 
     ecall_is_halt = False
 
@@ -181,6 +186,12 @@ def _handle_ecall(handler_body, current_func, addr_int,
         _emit_malloc(handler_body)
     elif is_free or tracked_a7_syscall == 31:
         handler_body.append("        local _ptr = reg[11]")
+        if validate:
+            handler_body.append("        if _ptr == 0 then")
+            handler_body.append("            error('[VM Validation] Attempt to free null pointer')")
+            handler_body.append("        elseif not ALLOCS[_ptr] then")
+            handler_body.append("            error('[VM Validation] Double-free or free of unallocated pointer 0x' .. string.format('%x', _ptr))")
+            handler_body.append("        end")
         handler_body.append("        if _ptr ~= 0 and ALLOCS[_ptr] then")
         handler_body.append("            local _size = ALLOCS[_ptr]")
         handler_body.append("            ALLOCS[_ptr] = nil")
@@ -415,16 +426,56 @@ def _handle_ecall(handler_body, current_func, addr_int,
         handler_body.append("            S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
         handler_body.append("        end")
 
-    # Generic print (syscalls 4-7)
+    # Syscall 53: require — requires a ModuleScript instance, returns handle
+    # Works with any return type (Instance, table, etc.) — stored in OBJECTS
+    # so callMethod can dispatch on it via bracket notation.
+    elif is_require or tracked_a7_syscall == 53:
+        handler_body.append("        local _obj = OBJECTS[reg[11]]")
+        handler_body.append("        if _obj then")
+        handler_body.append("            local _result = require(_obj)")
+        handler_body.append("            if _result ~= nil then")
+        handler_body.append("                OBJECTS[S.NEXT_HANDLE] = _result")
+        handler_body.append("                reg[11] = S.NEXT_HANDLE")
+        handler_body.append("                S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
+        handler_body.append("            else")
+        handler_body.append("                reg[11] = 0")
+        handler_body.append("            end")
+        handler_body.append("        else")
+        handler_body.append("            reg[11] = 0")
+        handler_body.append("        end")
+
+    # Syscall 52: getGlobal(name) — wraps the named Lua global in OBJECTS and returns a handle
+    elif is_get_global or tracked_a7_syscall == 52:
+        # Resolve the global name from the rodata string at transpile time
+        _global_name_resolved = None
+        if tracked_a0_literal and len(tracked_a0_literal) >= 2:
+            if tracked_a0_literal[0] == '"' and tracked_a0_literal[-1] == '"':
+                # Strip quotes and unescape to get the raw identifier
+                _inner = tracked_a0_literal[1:-1]
+                _inner = _inner.replace('\\\\', '\\').replace('\\"', '"').replace('\\n', '\n').replace('\\t', '\t')
+                # Only use literal emission if the name is a valid Lua identifier
+                if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', _inner):
+                    _global_name_resolved = _inner
+        if _global_name_resolved:
+            handler_body.append(f"        OBJECTS[S.NEXT_HANDLE] = {_global_name_resolved}")
+            handler_body.append("        reg[11] = S.NEXT_HANDLE")
+            handler_body.append("        S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
+        else:
+            handler_body.append("        local _globalName = RODATA[reg[11]] or '?'")
+            handler_body.append("        OBJECTS[S.NEXT_HANDLE] = _G[_globalName]")
+            handler_body.append("        reg[11] = S.NEXT_HANDLE")
+            handler_body.append("        S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
+
+    # Generic print (syscalls 4-7) — dynamic lookups so inlined code
+    # works even when transpile-time literal tracking loses context.
     elif tracked_a7_syscall == 4:
-        handler_body.append(f"        print({tracked_a0_literal})")
+        handler_body.append("        print(RODATA[reg[11]] or '[string@' .. string.format('0x%x', reg[11]) .. ']')")
     elif tracked_a7_syscall == 5:
-        handler_body.append(f"        print({tracked_a0_literal})")
+        handler_body.append("        print(reg[11])")
     elif tracked_a7_syscall == 6:
-        bool_str = "true" if tracked_a0_literal == "1" else "false"
-        handler_body.append(f"        print({bool_str})")
+        handler_body.append("        print(reg[11] ~= 0)")
     elif tracked_a7_syscall == 7:
-        handler_body.append(f"        print({tracked_a0_literal})")
+        handler_body.append("        print(bits_to_f32(read_mem32(reg[11])))")
 
     else:
         handler_body.append("        print('System Halt: ecall (a7=' .. reg[18] .. ')')")

@@ -1,0 +1,2774 @@
+Unimplemented Methods Report
+Generated: 2026-06-14 21:40:23
+============================================================
+
+Total unique unimplemented: 2456
+
+
+--- deprecated (262 methods) ---
+  AdService::ShowVideoAd
+  AnalyticsService::FireCustomEvent
+  AnalyticsService::FireEvent
+  AnalyticsService::FireInGameEconomyEvent
+  AnalyticsService::FireLogEvent
+  AnalyticsService::FirePlayerProgressionEvent
+  AnimationClipProvider::GetAnimationClip
+  AnimationClipProvider::GetAnimationClipById
+  AnimationClipProvider::GetAnimations
+  AnimationController::GetPlayingAnimationTracks
+  AnimationController::LoadAnimation
+  AnnotationsService::LoadResolvedAnnotations
+  AssetService::GetAssetIdsForPackage
+  AssetService::GetCreatorAssetID
+  AssetService::SearchAudio
+  Attachment::GetAxis
+  Attachment::GetSecondaryAxis
+  Attachment::SetAxis
+  Attachment::SetSecondaryAxis
+  AvatarEditorService::CheckApplyDefaultClothing
+  AvatarEditorService::ConformToAvatarRules
+  AvatarEditorService::GetAvatarRules
+  AvatarEditorService::GetBatchItemDetails
+  AvatarEditorService::GetFavorite
+  AvatarEditorService::GetInventory
+  AvatarEditorService::GetItemDetails
+  AvatarEditorService::GetOutfitDetails
+  AvatarEditorService::GetOutfits
+  AvatarEditorService::GetRecommendedAssets
+  AvatarEditorService::GetRecommendedBundles
+  AvatarEditorService::SearchCatalog
+  BadgeService::AwardBadge
+  BadgeService::IsDisabled
+  BadgeService::IsLegal
+  BadgeService::UserHasBadge
+  BasePart::BreakJoints
+  BasePart::GetRenderCFrame
+  BasePart::GetRootPart
+  BasePart::MakeJoints
+  BasePart::breakJoints
+  BasePart::getMass
+  BasePart::makeJoints
+  BasePart::resize
+  BodyPosition::lastForce
+  Camera::GetLargestCutoffDistance
+  Camera::GetPanSpeed
+  Camera::GetTiltSpeed
+  Camera::Interpolate
+  Camera::PanUnits
+  Camera::SetCameraPanMode
+  Camera::TiltUnits
+  Chat::FilterStringForPlayerAsync
+  CollectionService::GetCollection
+  Constraint::GetDebugAppliedForce
+  Constraint::GetDebugAppliedTorque
+  ContentProvider::Preload
+  ContextActionService::BindActionToInputTypes
+  Controller::bindButton
+  Controller::getButton
+  DataModel::GetMessage
+  DataModel::GetRemoteBuildMode
+  DataModel::IsGearTypeAllowed
+  DataModel::SavePlace
+  DataStore::RemoveVersionAsync
+  Debris::addItem
+  DebuggerManager::StepIn
+  DebuggerManager::StepOut
+  DebuggerManager::StepOver
+  EditableMesh::GetFacesWithAttribute
+  EditableMesh::GetVerticesWithAttribute
+  GamePassService::PlayerHasPass
+  GlobalDataStore::OnUpdate
+  GuiService::AddSelectionParent
+  GuiService::AddSelectionTuple
+  GuiService::GetErrorMessage
+  GuiService::OpenBrowserWindow
+  GuiService::OpenNativeOverlay
+  GuiService::RemoveSelectionGroup
+  Humanoid::AddCustomStatus
+  Humanoid::AddStatus
+  Humanoid::ApplyDescription
+  Humanoid::ApplyDescriptionReset
+  Humanoid::GetPlayingAnimationTracks
+  Humanoid::GetStatuses
+  Humanoid::HasCustomStatus
+  Humanoid::HasStatus
+  Humanoid::LoadAnimation
+  Humanoid::PlayEmote
+  Humanoid::RemoveCustomStatus
+  Humanoid::RemoveStatus
+  Humanoid::loadAnimation
+  Humanoid::takeDamage
+  InsertService::ApproveAssetId
+  InsertService::ApproveAssetVersionId
+  InsertService::GetBaseCategories
+  InsertService::GetBaseSets
+  InsertService::GetCollection
+  InsertService::GetFreeDecals
+  InsertService::GetFreeModels
+  InsertService::GetUserCategories
+  InsertService::GetUserSets
+  InsertService::Insert
+  InsertService::loadAsset
+  Instance::Remove
+  Instance::children
+  Instance::clone
+  Instance::destroy
+  Instance::findFirstChild
+  Instance::getChildren
+  Instance::isDescendantOf
+  Instance::remove
+  KeyframeSequenceProvider::GetAnimations
+  KeyframeSequenceProvider::GetKeyframeSequence
+  KeyframeSequenceProvider::GetKeyframeSequenceById
+  LayerCollector::GetLayoutNodeTree
+  Lighting::getMinutesAfterMidnight
+  Lighting::setMinutesAfterMidnight
+  LocalizationTable::GetContents
+  LocalizationTable::GetString
+  LocalizationTable::RemoveKey
+  LocalizationTable::SetContents
+  LocalizationTable::SetEntry
+  MarketplaceService::GetProductInfo
+  MarketplaceService::PlayerOwnsAsset
+  MarketplaceService::PlayerOwnsBundle
+  MarketplaceService::PromptPremiumPurchase
+  Model::BreakJoints
+  Model::GetModelCFrame
+  Model::GetModelSize
+  Model::GetPrimaryPartCFrame
+  Model::MakeJoints
+  Model::ResetOrientationToIdentity
+  Model::SetIdentityOrientation
+  Model::SetPrimaryPartCFrame
+  Model::breakJoints
+  Model::makeJoints
+  Model::move
+  Model::moveTo
+  Object::isA
+  OpenCloudApiV1::CreateModel
+  OpenCloudApiV1::CreateUserNotificationAsync
+  OpenCloudService::GetApiV1
+  OpenCloudService::InvokeAsync
+  Path::GetPointCoordinates
+  PathfindingService::ComputeRawPathAsync
+  PathfindingService::ComputeSmoothPathAsync
+  PhysicsService::CollisionGroupContainsPart
+  PhysicsService::CreateCollisionGroup
+  PhysicsService::GetCollisionGroupId
+  PhysicsService::GetCollisionGroupName
+  PhysicsService::GetCollisionGroups
+  PhysicsService::RemoveCollisionGroup
+  PhysicsService::SetPartCollisionGroup
+  Player::GetFriendsOnline
+  Player::GetRankInGroup
+  Player::GetRankInGroupAsync
+  Player::GetRoleInGroup
+  Player::GetRoleInGroupAsync
+  Player::IsBestFriendsWith
+  Player::IsFriendsWith
+  Player::IsInGroup
+  Player::LoadBoolean
+  Player::LoadCharacter
+  Player::LoadCharacterAppearance
+  Player::LoadCharacterWithHumanoidDescription
+  Player::LoadData
+  Player::LoadInstance
+  Player::LoadNumber
+  Player::LoadString
+  Player::SaveBoolean
+  Player::SaveData
+  Player::SaveInstance
+  Player::SaveNumber
+  Player::SaveString
+  Player::SetUnder13
+  Player::WaitForDataReady
+  Player::isFriendsWith
+  Player::loadBoolean
+  Player::loadInstance
+  Player::loadNumber
+  Player::loadString
+  Player::saveBoolean
+  Player::saveInstance
+  Player::saveNumber
+  Player::saveString
+  Player::waitForDataReady
+  PlayerGui::GetTopbarTransparency
+  PlayerGui::SetTopbarTransparency
+  Players::CreateHumanoidModelFromDescription
+  Players::CreateHumanoidModelFromUserId
+  Players::GetCharacterAppearanceAsync
+  Players::GetHumanoidDescriptionFromOutfitId
+  Players::GetHumanoidDescriptionFromUserId
+  Players::getPlayers
+  Players::playerFromCharacter
+  Players::players
+  Plugin::CreateDockWidgetPluginGui
+  Plugin::GetStudioUserId
+  Plugin::ImportFbxAnimation
+  Plugin::ImportFbxRig
+  Plugin::OpenScript
+  Plugin::PromptSaveSelection
+  PluginManager::CreatePlugin
+  PluginManagerInterface::CreatePlugin
+  PointsService::AwardPoints
+  PointsService::GetAwardablePoints
+  PointsService::GetGamePointBalance
+  PointsService::GetPointBalance
+  RocketPropulsion::fire
+  RunService::Reset
+  SensorBase::Sense
+  ServiceProvider::getService
+  ServiceProvider::service
+  SocialService::PromptLinkSharing
+  Sound::pause
+  Sound::play
+  Sound::stop
+  StudioService::PromptImportFile
+  StudioService::PromptImportFiles
+  Teams::RebalanceTeams
+  TeleportService::ReserveServer
+  Terrain::AutowedgeCell
+  Terrain::AutowedgeCells
+  Terrain::ConvertToSmooth
+  Terrain::GetCell
+  Terrain::GetWaterCell
+  Terrain::SetCell
+  Terrain::SetCells
+  Terrain::SetWaterCell
+  TerrainRegion::ConvertToSmooth
+  TestService::Run
+  TextFilterResult::GetChatForUserAsync
+  UIGridStyleLayout::ApplyLayout
+  UIGridStyleLayout::SetCustomSortFunction
+  UserInputService::GetUserCFrame
+  VoiceChatInternal::GetAndClearCallFailureMessage
+  VoiceChatInternal::GetAudioProcessingSettings
+  VoiceChatInternal::GetMicDevices
+  VoiceChatInternal::GetParticipants
+  VoiceChatInternal::GetVoiceChatApiVersion
+  VoiceChatInternal::GetVoiceChatAvailable
+  VoiceChatInternal::IsPublishPaused
+  VoiceChatInternal::IsSubscribePaused
+  VoiceChatInternal::JoinByGroupId
+  VoiceChatInternal::JoinByGroupIdToken
+  VoiceChatInternal::Leave
+  VoiceChatInternal::PublishPause
+  VoiceChatInternal::SetMicDevice
+  VoiceChatInternal::SubscribePause
+  VoiceChatInternal::SubscribePauseAll
+  Workspace::BreakJoints
+  Workspace::MakeJoints
+  WorldRoot::FindPartOnRay
+  WorldRoot::FindPartOnRayWithIgnoreList
+  WorldRoot::FindPartOnRayWithWhitelist
+  WorldRoot::FindPartsInRegion3
+  WorldRoot::FindPartsInRegion3WithIgnoreList
+  WorldRoot::FindPartsInRegion3WithWhiteList
+  WorldRoot::IsRegion3Empty
+  WorldRoot::IsRegion3EmptyWithIgnoreList
+  WorldRoot::findPartOnRay
+  WorldRoot::findPartsInRegion3
+
+--- multi_reg_type:CFrame(boundingBoxCFrame) (1 methods) ---
+  Camera::ZoomToExtents
+
+--- multi_reg_type:CFrame(cframe) (6 methods) ---
+  EditableMesh::SetBoneCFrame
+  EditableMesh::SetFacsBonePose
+  Terrain::FillBlock
+  Terrain::FillCylinder
+  Terrain::FillWedge
+  VRService::RequestNavigation
+
+--- multi_reg_type:CFrame(originalCFrame) (1 methods) ---
+  WrapDeformer::GetDeformedCFrameAsync
+
+--- multi_reg_type:CFrame(targetCFrame) (1 methods) ---
+  PVInstance::PivotTo
+
+--- multi_reg_type:Color3(color) (3 methods) ---
+  EditableMesh::AddColor
+  EditableMesh::SetColor
+  Terrain::SetMaterialSlot
+
+--- multi_reg_type:Color3(value) (1 methods) ---
+  Terrain::SetMaterialColor
+
+--- multi_reg_type:Ray(mouseRay) (1 methods) ---
+  Dragger::MouseMove
+
+--- multi_reg_type:TweenInfo(tweenInfo) (1 methods) ---
+  TweenService::Create
+
+--- multi_reg_type:UDim2(position) (1 methods) ---
+  ContextActionService::SetPosition
+
+--- multi_reg_type:Vector2(frameSize) (1 methods) ---
+  TextService::GetTextSize
+
+--- multi_reg_type:Vector2(position) (5 methods) ---
+  EditableImage::DrawImage
+  EditableImage::WritePixelsBuffer
+  VirtualInput::SendMouseButton
+  VirtualInput::SendMousePosition
+  VirtualInput::SendPointerAction
+
+--- multi_reg_type:Vector2(positionDelta) (1 methods) ---
+  VirtualInput::SendMouseDelta
+
+--- multi_reg_type:Vector2(uv) (2 methods) ---
+  EditableMesh::AddUV
+  EditableMesh::SetUV
+
+--- multi_reg_type:Vector3(angAcceleration) (1 methods) ---
+  BasePart::AngularAccelerationToTorque
+
+--- multi_reg_type:Vector3(center) (1 methods) ---
+  Terrain::FillBall
+
+--- multi_reg_type:Vector3(control) (1 methods) ---
+  DigitsRigDescription::SetFingerControl
+
+--- multi_reg_type:Vector3(delta) (1 methods) ---
+  Model::TranslateBy
+
+--- multi_reg_type:Vector3(from) (1 methods) ---
+  WireframeHandleAdornment::AddLine
+
+--- multi_reg_type:Vector3(impulse) (3 methods) ---
+  BasePart::ApplyAngularImpulse
+  BasePart::ApplyImpulse
+  BasePart::ApplyImpulseAtPosition
+
+--- multi_reg_type:Vector3(impulseWorld) (1 methods) ---
+  SkateboardPlatform::ApplySpecificImpulse
+
+--- multi_reg_type:Vector3(location) (1 methods) ---
+  Humanoid::MoveTo
+
+--- multi_reg_type:Vector3(moveDirection) (1 methods) ---
+  Humanoid::Move
+
+--- multi_reg_type:Vector3(normal) (2 methods) ---
+  EditableMesh::AddNormal
+  EditableMesh::SetNormal
+
+--- multi_reg_type:Vector3(p) (2 methods) ---
+  EditableMesh::AddVertex
+  EditableMesh::SetPosition
+
+--- multi_reg_type:Vector3(point) (3 methods) ---
+  DigitsRigDescription::SetFingerTip
+  Player::DistanceFromCharacter
+  WireframeHandleAdornment::AddText
+
+--- multi_reg_type:Vector3(pointOnMousePart) (1 methods) ---
+  Dragger::MouseDown
+
+--- multi_reg_type:Vector3(position) (7 methods) ---
+  BasePart::GetClosestPointOnSurface
+  BasePart::GetVelocityAtPosition
+  Model::MoveTo
+  Player::RequestStreamAroundAsync
+  Terrain::WorldToCell
+  Terrain::WorldToCellPreferEmpty
+  Terrain::WorldToCellPreferSolid
+
+--- multi_reg_type:Vector3(start) (2 methods) ---
+  Path::ComputeAsync
+  PathfindingService::FindPathAsync
+
+--- multi_reg_type:Vector3(toThisPoint) (1 methods) ---
+  EditableMesh::FindClosestVertex
+
+--- multi_reg_type:Vector3(torque) (1 methods) ---
+  BasePart::TorqueToAngularAcceleration
+
+--- multi_reg_type:Vector3(walkDirection) (1 methods) ---
+  Player::Move
+
+--- multi_reg_type:Vector3int16(corner) (1 methods) ---
+  Terrain::PasteRegion
+
+--- security:LocalUserSecurity (60 methods) ---
+  ContentProvider::SetBaseUrl
+  DataModel::GetEngineFeature
+  DataModel::GetFastFlag
+  DataModel::GetFastInt
+  DataModel::GetFastString
+  DataModel::Load
+  DataModel::Shutdown
+  Debris::SetLegacyMaxItems
+  DebuggerManager::EnableDebugging
+  GuiService::SetUiMessage
+  HttpService::RequestAccessTokenScopesAsync
+  IXPService::ClearCreatorLayers
+  IXPService::ClearUserLayers
+  IXPService::GetBrowserTrackerLayerLoadingStatus
+  IXPService::GetBrowserTrackerLayerVariables
+  IXPService::GetBrowserTrackerStatusForLayer
+  IXPService::GetCreatorLayerLoadingStatus
+  IXPService::GetCreatorLayerVariables
+  IXPService::GetCreatorStatusForLayer
+  IXPService::GetRegisteredCreatorLayersToStatus
+  IXPService::GetRegisteredUserLayersToStatus
+  IXPService::GetUserLayerLoadingStatus
+  IXPService::GetUserLayerVariables
+  IXPService::GetUserStatusForLayer
+  IXPService::InitializeCreatorLayers
+  IXPService::InitializeUserLayers
+  IXPService::LogBrowserTrackerLayerExposure
+  IXPService::LogCreatorLayerExposure
+  IXPService::LogFlagLinkedUserLayerExposure
+  IXPService::LogUserLayerExposure
+  IXPService::RegisterCreatorLayers
+  IXPService::RegisterUserLayers
+  MarketplaceService::PromptThirdPartyPurchase
+  NotificationService::CancelAllNotification
+  NotificationService::CancelNotification
+  NotificationService::GetScheduledNotifications
+  NotificationService::ScheduleNotification
+  PhysicsService::LocalIkSolve
+  Player::LoadCharacterBlocking
+  Player::RemoveCharacter
+  Players::CreateLocalPlayer
+  Players::ReportAbuse
+  Players::ResetLocalPlayer
+  Players::WhisperChat
+  Script::GetHash
+  VirtualUser::Button1Down
+  VirtualUser::Button1Up
+  VirtualUser::Button2Down
+  VirtualUser::Button2Up
+  VirtualUser::CaptureController
+  VirtualUser::ClickButton1
+  VirtualUser::ClickButton2
+  VirtualUser::MoveMouse
+  VirtualUser::SetKeyDown
+  VirtualUser::SetKeyUp
+  VirtualUser::StartRecording
+  VirtualUser::StopRecording
+  VirtualUser::TypeKey
+  Workspace::ExperimentalSolverIsEnabled
+  Workspace::SetPhysicsThrottleEnabled
+
+--- security:PluginSecurity (166 methods) ---
+  Animator::StepAnimations
+  ChangeHistoryService::FinishRecording
+  ChangeHistoryService::GetCanRedo
+  ChangeHistoryService::GetCanUndo
+  ChangeHistoryService::IsRecordingInProgress
+  ChangeHistoryService::Redo
+  ChangeHistoryService::ResetWaypoints
+  ChangeHistoryService::SetEnabled
+  ChangeHistoryService::SetWaypoint
+  ChangeHistoryService::TryBeginRecording
+  ChangeHistoryService::Undo
+  DataModel::GetJobsInfo
+  DataModel::GetObjects
+  DataModel::SetPlaceId
+  DataModel::SetUniverseId
+  File::GetBinaryContents
+  File::GetTemporaryId
+  HeapProfilerService::ClientRequestDataAsync
+  HeapProfilerService::ServerRequestDataAsync
+  Instance::GetDebugId
+  InstanceFileSyncService::GetAllInstances
+  InstanceFileSyncService::GetStatus
+  InstanceFileSyncService::GetSyncedInstance
+  MemStorageConnection::Disconnect
+  NetworkPeer::SetOutgoingKBPSLimit
+  Player::SetAccountAge
+  Player::SetSuperSafeChat
+  Players::Chat
+  Players::SetChatStyle
+  Players::TeamChat
+  Plugin::Activate
+  Plugin::CreateDockWidgetPluginGuiAsync
+  Plugin::CreatePluginAction
+  Plugin::CreatePluginMenu
+  Plugin::CreateToolbar
+  Plugin::Deactivate
+  Plugin::GetJoinMode
+  Plugin::GetMouse
+  Plugin::GetSelectedRibbonTool
+  Plugin::GetSetting
+  Plugin::ImportFbxAnimationAsync
+  Plugin::ImportFbxRigAsync
+  Plugin::Intersect
+  Plugin::IsActivated
+  Plugin::IsActivatedWithExclusiveMouse
+  Plugin::Negate
+  Plugin::OpenWikiPage
+  Plugin::PromptForExistingAssetId
+  Plugin::PromptForExistingAssetIdAsync
+  Plugin::PromptSaveSelectionAsync
+  Plugin::SaveSelectedToRoblox
+  Plugin::SelectRibbonTool
+  Plugin::Separate
+  Plugin::SetSetting
+  Plugin::StartDrag
+  Plugin::Union
+  PluginConnection::BindToMessage
+  PluginConnection::SendMessage
+  PluginConnectionService::CanHaveConnectionType
+  PluginConnectionService::GetPluginConnectionsOfType
+  PluginGui::GetRelativeMousePosition
+  PluginManager::ExportPlace
+  PluginManager::ExportSelection
+  PluginManagerInterface::ExportPlace
+  PluginManagerInterface::ExportSelection
+  PluginMenu::AddAction
+  PluginMenu::AddMenu
+  PluginMenu::AddNewAction
+  PluginMenu::AddSeparator
+  PluginMenu::Clear
+  PluginMenu::ShowAsync
+  PluginToolbar::CreateButton
+  PluginToolbarButton::SetActive
+  RenderSettings::GetMaxQualityLevel
+  RunService::IsEdit
+  RunService::Pause
+  RunService::Run
+  RunService::Stop
+  ScriptContext::SetTimeout
+  ScriptDebuggerService::AddBreakpoint
+  ScriptDebuggerService::ClearBreakpoints
+  ScriptDebuggerService::Evaluate
+  ScriptDebuggerService::GetRootVariables
+  ScriptDebuggerService::GetStackTrace
+  ScriptDebuggerService::GetThreads
+  ScriptDebuggerService::GetVariables
+  ScriptDebuggerService::Pause
+  ScriptDebuggerService::RemoveBreakpoint
+  ScriptDebuggerService::SetExceptionBreakMode
+  ScriptDocument::CloseAsync
+  ScriptDocument::EditTextAsync
+  ScriptDocument::ForceSetSelectionAsync
+  ScriptDocument::GetLine
+  ScriptDocument::GetLineCount
+  ScriptDocument::GetScript
+  ScriptDocument::GetSelectedText
+  ScriptDocument::GetSelection
+  ScriptDocument::GetSelectionEnd
+  ScriptDocument::GetSelectionStart
+  ScriptDocument::GetText
+  ScriptDocument::GetViewport
+  ScriptDocument::HasSelectedText
+  ScriptDocument::IsCommandBar
+  ScriptDocument::MultiEditTextAsync
+  ScriptDocument::RequestSetSelectionAsync
+  ScriptEditorService::DeregisterAutocompleteCallback
+  ScriptEditorService::DeregisterScriptAnalysisCallback
+  ScriptEditorService::FindScriptDocument
+  ScriptEditorService::GetEditorSource
+  ScriptEditorService::GetScriptDocuments
+  ScriptEditorService::OpenScriptDocumentAsync
+  ScriptEditorService::RegisterAutocompleteCallback
+  ScriptEditorService::RegisterScriptAnalysisCallback
+  ScriptEditorService::UpdateSourceAsync
+  ScriptProfilerService::ClientRequestData
+  ScriptProfilerService::ClientStart
+  ScriptProfilerService::ClientStop
+  ScriptProfilerService::DeserializeJSON
+  ScriptProfilerService::ServerRequestData
+  ScriptProfilerService::ServerStart
+  ScriptProfilerService::ServerStop
+  Selection::Add
+  Selection::Get
+  Selection::Remove
+  Selection::Set
+  SoundService::OpenAttenuationCurveEditor
+  SoundService::OpenDirectionalCurveEditor
+  StatsItem::GetValue
+  StatsItem::GetValueString
+  Studio::GetAvailableThemes
+  StudioCaptureService::CanCaptureScreenshot
+  StudioCaptureService::CaptureScreenshot
+  StudioCaptureService::RequestScreenshotPermissionAsync
+  StudioDeviceSimulatorService::CreateDeviceAsync
+  StudioDeviceSimulatorService::GetDeviceAsync
+  StudioDeviceSimulatorService::GetDeviceInfoAsync
+  StudioDeviceSimulatorService::GetDeviceListAsync
+  StudioDeviceSimulatorService::GetOrientationAsync
+  StudioDeviceSimulatorService::GetPixelDensityAsync
+  StudioDeviceSimulatorService::GetResolutionAsync
+  StudioDeviceSimulatorService::GetScalingModeAsync
+  StudioDeviceSimulatorService::RemoveDeviceAsync
+  StudioDeviceSimulatorService::SetDeviceAsync
+  StudioDeviceSimulatorService::SetOrientationAsync
+  StudioDeviceSimulatorService::SetPixelDensityAsync
+  StudioDeviceSimulatorService::SetResolutionAsync
+  StudioDeviceSimulatorService::SetScalingModeAsync
+  StudioDeviceSimulatorService::StopSimulationAsync
+  StudioDeviceSimulatorService::UpdateDeviceAsync
+  StudioScreenshotCapture::GetBuffer
+  StudioScreenshotCapture::GetErrors
+  StudioScreenshotCapture::ScaleAsync
+  StudioService::GetClassIcon
+  StudioService::GetUserId
+  StudioService::GizmoRaycast
+  StudioService::PromptImportFileAsync
+  StudioService::PromptImportFilesAsync
+  StudioTestService::ExecuteMultiplayerTestAsync
+  StudioTestService::ExecutePlayModeAsync
+  StudioTestService::ExecuteRunModeAsync
+  StudioTheme::GetColor
+  TestService::RunAsync
+  Workspace::ApplyRecommendedStreamingSettings
+  Workspace::ZoomToExtents
+  WorldRoot::IKMoveTo
+  WorldRoot::StepPhysics
+
+--- security:RobloxScriptSecurity (1291 methods) ---
+  AccountService::DeviceAccessTokenAvailable
+  AccountService::DeviceIntegrityAvailable
+  AccountService::GetCredentialsHeaders
+  AccountService::GetDeviceAccessToken
+  AccountService::GetDeviceIntegrityToken
+  AccountService::GetDeviceIntegrityTokenYield
+  AccountService::MagicLogin
+  AchievementService::GrantAchievement
+  AchievementService::HasAchieved
+  AchievementService::IsAvailable
+  AdGui::GetSingleReportAdInfo
+  AdGui::HandleLuaUIEvent
+  AdGui::forwardStateToLuaUI
+  AdService::GetAdAvailabilityNowForUniverseAsync
+  AdService::GetAdTeleportInfo
+  AdService::GetReportAdInfo
+  AdService::GetUniversalAppAdsEligibility
+  AdService::HandleWhyThisAdClicked
+  AdService::HideEudsaDisclosure
+  AdService::OnDemandVideoCompleteFromUI
+  AdService::ReturnToPublisherExperience
+  AdService::SetAdGuiInteractivityHandlerInitialized
+  AdService::ShowRewardedVideoAdAtClientAsync
+  AdService::SubmitAdNotification
+  AnimationClipProvider::GetAnimationNodeDefinition
+  AnimationClipProvider::GetAnimationNodeTypes
+  AnimationClipProvider::GetMemStats
+  AnimationFromVideoCreatorService::CreateJob
+  AnimationFromVideoCreatorService::DownloadJobResult
+  AnimationFromVideoCreatorService::FullProcess
+  AnimationFromVideoCreatorService::GetJobStatus
+  AnimationFromVideoCreatorStudioService::CreateAnimationByUploadingVideo
+  AnimationFromVideoCreatorStudioService::ImportVideoWithPrompt
+  AnimationFromVideoCreatorStudioService::IsAgeRestricted
+  AnimationNodeDefinition::AddInputPin
+  AnimationNodeDefinition::GetOrderedInputPinNames
+  AnimationNodeDefinition::RemoveInputPin
+  AnimationNodeDefinition::SetOrderedInputPinNames
+  AnimationRigData::GetLabels
+  AnimationRigData::GetNames
+  AnimationRigData::GetParents
+  AnimationRigData::GetPostTransforms
+  AnimationRigData::GetPreTransforms
+  AnimationRigData::GetTransforms
+  AnimationRigData::IsValidR15
+  AnimationRigData::LoadFromHumanoid
+  AnimationRigData::LoadFromModel
+  AnimationStreamTrack::AdjustWeight
+  AnimationStreamTrack::GetActive
+  AnimationStreamTrack::GetTrackerData
+  AnimationStreamTrack::Play
+  AnimationStreamTrack::Stop
+  AnimationStreamTrack::TogglePause
+  AnimationTrack::GetDebugData
+  AnimationTrack::UpdateGraphNodeProperty
+  Animator::GetPlayingAnimationTracksCoreScript
+  Animator::LoadAnimationCoreScript
+  Animator::LoadStreamAnimation
+  Animator::LoadStreamAnimationForSelfieView_deprecated
+  Animator::LoadStreamAnimationV2
+  Animator::StepAnimationsInternal
+  Animator::SynchronizeWith
+  Annotation::GetRequests
+  Annotation::GetStringUniqueId
+  Annotation::IsThreadParent
+  AnnotationsService::CreateAnnotation
+  AnnotationsService::CreateOrUpdateChannelPreferenceAsync
+  AnnotationsService::CreateOrUpdatePlacePreference
+  AnnotationsService::CreateOrUpdatePlacePreferenceAsync
+  AnnotationsService::DeleteAnnotation
+  AnnotationsService::EditAnnotation
+  AnnotationsService::GetAnnotationThreads
+  AnnotationsService::GetChannelPreferenceAsync
+  AnnotationsService::GetPlacePreference
+  AnnotationsService::GetPlacePreferenceAsync
+  AnnotationsService::LoadAnnotationReplies
+  AnnotationsService::LoadAnnotations
+  AnnotationsService::ResolveAnnotation
+  AppAgeSignalsService::GetAppAgeSignalsAsync
+  AppAgeSignalsService::IsAvailable
+  AppLifecycleObserverService::GetCurrentState
+  AppLifecycleObserverService::IsDidDetachSupported
+  AppLifecycleObserverService::TriggerOnLandingPageMount
+  AppLifecycleObserverService::TriggerOnLuaAppInteractive
+  AppLifecycleObserverService::TriggerOnLuaAppReadyToRender
+  AppRatingPromptService::isAppRatingPromptAvailable
+  AppRatingPromptService::showAppRatingPrompt
+  AppUpdateService::CanPerformBinaryUpdate
+  AppUpdateService::CheckForUpdate
+  AppUpdateService::GetProtocolLaunchUpdateName
+  AppUpdateService::GetProtocolLaunchUpdateType
+  AppUpdateService::PerformManagedUpdate
+  AssetImportService::GetAllPresets
+  AssetImportService::GetFilesInDirAsync
+  AssetImportService::GetPreset
+  AssetImportService::PickFileWithPromptAsync
+  AssetImportService::PickImageFileWithPrompt
+  AssetImportService::PickMeshFileWithPrompt
+  AssetImportService::PickMultipleFilesWithPrompt
+  AssetImportService::RemovePreset
+  AssetImportService::SavePreset
+  AssetImportService::StartSessionWithPath
+  AssetImportService::StartSessionWithPathAsync
+  AssetImportService::StartSingleFileWatch
+  AssetImportService::StopSingleFileWatch
+  AssetImportService::UploadAssetFromContentAsync
+  AssetImportService::UploadAssetFromPathAsync
+  AssetImportSession::ApplyPreset
+  AssetImportSession::CreatePresetFromData
+  AssetImportSession::GetImportTree
+  AssetImportSession::GetKeyframeSequences
+  AssetImportSession::GetKeyframeSequencesForSelectedRestPose
+  AssetImportSession::GetRigVisualization
+  AssetImportSession::GetUploadStatus
+  AssetImportSession::HasAnimation
+  AssetImportSession::IsAvatar
+  AssetImportSession::IsGltf
+  AssetImportSession::IsR15
+  AssetImportSession::Reset
+  AssetImportSession::usesCustomRestPoseLua
+  AssetManagerService::AddNewPlace
+  AssetManagerService::CreateAlias
+  AssetManagerService::DeleteAlias
+  AssetManagerService::GetMeshIdFromAliasName
+  AssetManagerService::GetMeshIdFromAssetId
+  AssetManagerService::GetTextureIdFromAliasName
+  AssetManagerService::GetTextureIdFromAssetId
+  AssetManagerService::InsertAudio
+  AssetManagerService::InsertImage
+  AssetManagerService::InsertImages
+  AssetManagerService::InsertMesh
+  AssetManagerService::InsertMeshesWithLocation
+  AssetManagerService::InsertModel
+  AssetManagerService::InsertPackage
+  AssetManagerService::InsertVideo
+  AssetManagerService::OpenPlace
+  AssetManagerService::RemovePlace
+  AssetManagerService::RenameAlias
+  AssetManagerService::RenameModel
+  AssetManagerService::RenamePlace
+  AssetManagerService::ShowPackageDetails
+  AssetManagerService::UpdateAllPackages
+  AssetManagerService::ViewPackageOnWebsite
+  AssetQualityService::FetchAssetQualitySummaryFromGltfAsync
+  AssetQualityService::FetchAssetQualitySummaryFromJobIdAsync
+  AssetQualityService::FetchAssetQualityVisualizationDataFromUrlAsync
+  AssetQualityService::GenerateAssetQualityGltfFromInstanceAsync
+  AssetService::CachePartOperationsAsync
+  AssetService::CanEditAssetAsync
+  AssetService::DeserializeInstance
+  AssetService::GetOpaqueContentMetadataMap
+  AudioEcho::Reset
+  AudioFocusService::AcquireFocus
+  AudioFocusService::GetFocusedContextId
+  AudioFocusService::GetRegisteredContexts
+  AudioFocusService::RegisterContextIdFromLua
+  AudioFocusService::RequestFocus
+  AudioGate::Reset
+  AudioListener::Reset
+  AudioReverb::Reset
+  AuroraScriptObject::GetCurrentState
+  AuroraScriptObject::SetStateFieldValue
+  AvatarAccessoryRules::willRemoveAccessory
+  AvatarChatService::DebugCounterGet
+  AvatarChatService::EnableVoice
+  AvatarChatService::GetClientFeaturesAsync
+  AvatarChatService::GetServerFeaturesAsync
+  AvatarChatService::IsEnabled
+  AvatarChatService::IsPlaceEnabled
+  AvatarChatService::IsUniverseEnabled
+  AvatarChatService::PollClientFeatures
+  AvatarChatService::PollServerFeatures
+  AvatarChatService::deviceMeetsRequirementsForFeature
+  AvatarCreationService::CreateCageMeshPartsWithScaleForExportAsync
+  AvatarCreationService::DeserializeAvatarModel
+  AvatarCreationService::HandleSelfieConsentResult
+  AvatarCreationService::HandleSelfieQRResult
+  AvatarEditorService::BustAvatarFetchCache
+  AvatarEditorService::NoPromptCreateOutfit
+  AvatarEditorService::NoPromptDeleteOutfit
+  AvatarEditorService::NoPromptRenameOutfit
+  AvatarEditorService::NoPromptSaveAvatar
+  AvatarEditorService::NoPromptSaveAvatarThumbnailCustomization
+  AvatarEditorService::NoPromptSetFavorite
+  AvatarEditorService::NoPromptUpdateOutfit
+  AvatarEditorService::PerformCreateOutfitWithDescription
+  AvatarEditorService::PerformDeleteOutfit
+  AvatarEditorService::PerformRenameOutfit
+  AvatarEditorService::PerformSaveAvatarWithDescription
+  AvatarEditorService::PerformSetFavorite
+  AvatarEditorService::PerformUpdateOutfit
+  AvatarEditorService::SetAllowInventoryReadAccess
+  AvatarEditorService::SignalCreateOutfitFailed
+  AvatarEditorService::SignalCreateOutfitPermissionDenied
+  AvatarEditorService::SignalDeleteOutfitFailed
+  AvatarEditorService::SignalDeleteOutfitPermissionDenied
+  AvatarEditorService::SignalRenameOutfitFailed
+  AvatarEditorService::SignalRenameOutfitPermissionDenied
+  AvatarEditorService::SignalSaveAvatarFailed
+  AvatarEditorService::SignalSaveAvatarPermissionDenied
+  AvatarEditorService::SignalSetFavoriteFailed
+  AvatarEditorService::SignalSetFavoritePermissionDenied
+  AvatarEditorService::SignalUpdateOutfitFailed
+  AvatarEditorService::SignalUpdateOutfitPermissionDenied
+  AvatarEditorService::refreshAvatarThumbnails
+  AvatarImportService::ImportFBXAnimationFromFilePathUserMayChooseModel
+  AvatarImportService::ImportFBXAnimationUserMayChooseModel
+  AvatarImportService::ImportFbxRigWithoutSceneLoad
+  AvatarImportService::ImportLoadedFBXAnimation
+  AvatarImportService::LoadRigAndDetectType
+  AvatarSettings::Discard
+  AvatarSettings::Publish
+  BaseImportData::CreatePresetFromData
+  BaseImportData::GetPreview
+  BaseImportData::GetStatuses
+  BasePart::GetPhysicsCost
+  BasePlayerGui::GetGuiObjectsInCircle
+  BaseWrap::GetCageOffset
+  BaseWrap::GetFaces
+  BaseWrap::GetUVs
+  BaseWrap::GetVertices
+  BaseWrap::IsHSRReady
+  BaseWrap::ModifyVertices
+  BillboardGui::GetScreenSpaceBounds
+  BrowserService::CloseBrowserWindow
+  BrowserService::CopyAuthCookieFromBrowserToEngine
+  BrowserService::EmitHybridEvent
+  BrowserService::ExecuteJavaScript
+  BrowserService::OpenBrowserWindow
+  BrowserService::OpenNativeOverlay
+  BrowserService::OpenWeChatAuthWindow
+  BrowserService::ReturnToJavaScript
+  BrowserService::SendCommand
+  BugReporterService::IsAvailable
+  BulkImportService::LaunchBulkImport
+  BulkImportService::ShowBulkImportView
+  CalloutService::AttachCallout
+  CalloutService::DefineCallout
+  CalloutService::DetachCalloutsByDefinitionId
+  Camera::SetImageServerView
+  Camera::Zoom
+  CaptureService::CanCaptureVideo
+  CaptureService::CreatePostAsync
+  CaptureService::DeleteCapture
+  CaptureService::DeleteCapturesAsync
+  CaptureService::DeleteVideoCapture
+  CaptureService::DeleteVideoCaptureAsync
+  CaptureService::GetCaptureFilePathAsync
+  CaptureService::GetCaptureSizeAsync
+  CaptureService::GetCaptureStorageSizeAsync
+  CaptureService::GetCaptureUploadDataAsync
+  CaptureService::GetScreenshotCaptureObject
+  CaptureService::IsCapturingVideo
+  CaptureService::OnCaptureBegan
+  CaptureService::OnCaptureEnded
+  CaptureService::OnCaptureObjectShared
+  CaptureService::OnCapturePermissionsPromptFinished
+  CaptureService::OnCaptureShared
+  CaptureService::OnSavePromptFinished
+  CaptureService::OnSharePromptFinished
+  CaptureService::OnVideoCaptureShared
+  CaptureService::PreCaptureShared
+  CaptureService::PreVideoCaptureShared
+  CaptureService::RetrieveCaptures
+  CaptureService::SaveCaptureObjectToExternalStorage
+  CaptureService::SaveCaptureToExternalStorage
+  CaptureService::SaveCapturesToExternalStorageAsync
+  CaptureService::SaveScreenshotCapture
+  CaptureService::SaveVideoCaptureToExternalStorage
+  CaptureService::StartVideoCaptureInternalAsync
+  CaptureService::StopVideoCaptureInternal
+  CaptureService::UploadCaptureAndPostMoment
+  ChannelTabsConfiguration::SetAbsolutePosition
+  ChannelTabsConfiguration::SetAbsoluteSize
+  Chat::ChatLocal
+  Chat::GetShouldUseLuaChat
+  Chat::ReconcileCommunicationAccess
+  Chat::RequestModerationModeEnabled
+  ClientReplicator::IsStreamedOut
+  ClientReplicator::RequestRCCProfilerData
+  ClientReplicator::RequestServerStats
+  CollaboratorsService::GetCollaboratorsList
+  CollaboratorsService::GetSelectionHighlightsEnabled
+  CollaboratorsService::MultiGetCanCollaborate
+  CollaboratorsService::RequestFlyToCollaborator
+  CollaboratorsService::ToggleSelectionHighlights
+  CollaboratorsService::ToggleTeamCreate
+  CommerceService::PrepareCommerceProductPurchase
+  CommerceService::SignalPromptCommerceProductPurchaseFinished
+  ConnectivityService::IsNetworkStateAvailable
+  ContentProvider::GetDependencyContentIds
+  ContentProvider::GetDetailedFailedRequests
+  ContentProvider::GetFailedRequests
+  ContextActionService::BindCoreAction
+  ContextActionService::BindCoreActionAtPriority
+  ContextActionService::BindCoreActivate
+  ContextActionService::CallFunction
+  ContextActionService::FireActionButtonFoundSignal
+  ContextActionService::GetAllBoundCoreActionInfo
+  ContextActionService::GetBoundCoreActionInfo
+  ContextActionService::GetInputContexts
+  ContextActionService::GetInputSchemaKeyCodeTree
+  ContextActionService::UnbindCoreAction
+  ContextActionService::UnbindCoreActivate
+  CoreGui::SetUserGuiRendering
+  CoreGui::TakeScreenshot
+  CoreGui::ToggleRecording
+  CoreScriptSyncService::GetScriptFilePath
+  CreatorStoreService::GetAssetInfoAsync
+  CreatorStoreService::GetCreatorStoreProductInfoAsync
+  CreatorStoreService::PerformCreatorStorePurchase
+  CrossDMScriptChangeListener::IsWatchingScriptLine
+  CrossDMScriptChangeListener::StartWatchingScriptLine
+  DataModel::DefineFastFlag
+  DataModel::DefineFastInt
+  DataModel::DefineFastString
+  DataModel::GetObjectsAllOrNone
+  DataModel::GetObjectsAsync
+  DataModel::GetObjectsList
+  DataModel::GetPlaySessionId
+  DataModel::HttpGetAsync
+  DataModel::HttpPostAsync
+  DataModel::InsertObjectsAndJoinIfLegacyAsync
+  DataModel::IsContentLoaded
+  DataModel::IsUniverseMetadataLoaded
+  DataModel::OpenLogsFolder
+  DataModel::OpenScreenshotsFolder
+  DataModel::OpenVideosFolder
+  DataModel::SetFastFlagForTesting
+  DataModel::SetFastIntForTesting
+  DataModel::SetFastStringForTesting
+  DataModel::SetFlagVersion
+  DataModel::SetIsLoaded
+  DataModel::getGameTime
+  DataModelPatchService::GetLuaVersion
+  DataModelPatchService::GetPatch
+  DataModelPatchService::RegisterPatch
+  DataModelPatchService::UpdatePatch
+  DebuggerConnection::AddBreakpoint
+  DebuggerConnection::Close
+  DebuggerConnection::EvaluateWatch
+  DebuggerConnection::GetFrameById
+  DebuggerConnection::GetSource
+  DebuggerConnection::GetThreadById
+  DebuggerConnection::GetThreads
+  DebuggerConnection::GetVariableById
+  DebuggerConnection::Pause
+  DebuggerConnection::Populate
+  DebuggerConnection::RemoveBreakpoint
+  DebuggerConnection::Resume
+  DebuggerConnection::SetExceptionBreakMode
+  DebuggerConnection::SetVariable
+  DebuggerConnection::Step
+  DebuggerConnection::StepIn
+  DebuggerConnection::StepOut
+  DebuggerConnection::UpdateSelectedFrame
+  DebuggerConnectionManager::ConnectLocal
+  DebuggerConnectionManager::FocusConnection
+  DebuggerConnectionManager::GetAvailableConnection
+  DebuggerConnectionManager::GetConnectionById
+  DebuggerLuaResponse::GetArg
+  DebuggerUIService::EditBreakpoint
+  DebuggerUIService::EditWatch
+  DebuggerUIService::IsConnectionForPlayDataModel
+  DebuggerUIService::OpenExceptionMessagePopup
+  DebuggerUIService::OpenScriptAtLine
+  DebuggerUIService::Pause
+  DebuggerUIService::RemoveScriptLineMarkers
+  DebuggerUIService::Resume
+  DebuggerUIService::SetCurrentThreadId
+  DebuggerUIService::SetScriptLineMarker
+  DebuggerUIService::SetWatchExpressions
+  DebuggerVariable::GetVariableByIndex
+  DebuggerVariable::GetVariableByName
+  DeferredAssetManagerService::GetPrefetchDownloadStatus
+  DesignFoundationsService::ClearTokens
+  DesignFoundationsService::SetTokens
+  DeviceIdService::GetDeviceId
+  Dialog::SetGuiObject
+  Dialog::SetPlayerIsUsing
+  Dialog::SignalDialogChoiceSelected
+  DigitsRigDescription::GetJoint
+  DigitsRigDescription::GetJointLabels
+  DigitsRigDescription::GetTposeAdjustment
+  DigitsRigDescription::SetJoint
+  DigitsRigDescription::SetTposeAdjustment
+  DockWidgetPluginGui::RequestRaise
+  DraftsService::CommitEdits
+  DraftsService::DiscardEdits
+  DraftsService::GetDraftStatus
+  DraftsService::GetDrafts
+  DraftsService::GetEditors
+  DraftsService::RestoreScripts
+  DraftsService::ShowDiffsAgainstBase
+  DraftsService::ShowDiffsAgainstServer
+  DraftsService::ShowSourceDiffsAgainstCurrent
+  DraftsService::UpdateToLatestVersion
+  EditableImage::DrawTriangle
+  EventIngestService::SendEventDeferred
+  EventIngestService::SendEventImmediately
+  EventIngestService::SetRBXEvent
+  EventIngestService::SetRBXEventStream
+  ExampleV2Service::PrintHello
+  ExperienceAuthService::ScopeCheckUIComplete
+  ExperienceNotificationService::InvokeOptInPromptClosed
+  ExperienceService::ExecuteCrossExperienceCall
+  ExperienceService::GetFollowUserId
+  ExperienceService::GetPendingJoinAttempt
+  ExperienceService::GetPlaceJoinState
+  ExperienceService::GetQueuePosition
+  ExperienceService::LaunchExperience
+  ExperienceService::LaunchExperienceFromSource
+  ExperienceService::LaunchExperienceFromSourceWithCallback
+  ExperienceService::RegisterForExperienceJoin
+  ExperienceService::RegisterForExperienceLeave
+  ExperienceService::StartCrossExperience
+  ExperienceService::StopCrossExperience
+  ExperienceStateCaptureService::CanEnterCaptureMode
+  ExperienceStateCaptureService::ResetHighlight
+  ExperienceStateCaptureService::ToggleCaptureMode
+  ExperienceStateRecordingService::ExitPlayback
+  ExperienceStateRecordingService::GetCurrentPlaybackRestartFrames
+  ExperienceStateRecordingService::GetPlaybackCurrentFrame
+  ExperienceStateRecordingService::GetPlaybackMode
+  ExperienceStateRecordingService::LoadPlaybackAsync
+  ExperienceStateRecordingService::SetPlaybackFrame
+  ExperienceStateRecordingService::SetPlaybackMode
+  ExperienceStateRecordingService::SetPlaybackPercentage
+  ExplorerFilter::BeginSearch
+  ExplorerFilter::GetAutocompleter
+  ExplorerFilter::GetErrors
+  ExplorerFilter::GetLexemes
+  ExplorerFilter::GetSearchResults
+  ExplorerFilter::HasMoreResults
+  ExplorerFilter::InstancePassesFilter
+  ExplorerFilter::SetFilter
+  ExplorerFilterAutocompleter::GetSuggestions
+  FaceAnimatorService::GetTrackerLodController
+  FaceAnimatorService::Init
+  FaceAnimatorService::IsStarted
+  FaceAnimatorService::Start
+  FaceAnimatorService::Step
+  FaceAnimatorService::Stop
+  FaceControls::HasOverrideFACSData
+  FacialAgeEstimationService::InquiryAsync
+  FacialAgeEstimationService::IsAvailable
+  FacialAnimationRecordingService::CheckOrRequestCameraPermission
+  FacialAnimationRecordingService::IsAgeRestricted
+  FacialAnimationStreamingServiceStats::Get
+  FacialAnimationStreamingServiceStats::GetWithPlayerId
+  FacialAnimationStreamingServiceV2::GetStats
+  FacialAnimationStreamingServiceV2::IsAudioEnabled
+  FacialAnimationStreamingServiceV2::IsPlaceEnabled
+  FacialAnimationStreamingServiceV2::IsServerEnabled
+  FacialAnimationStreamingServiceV2::IsVideoEnabled
+  FacialAnimationStreamingServiceV2::ResolveStateForUser
+  FileManagerService::ListFilesInFolderAsync
+  FileManagerService::OpenFileInWebBrowser
+  FileManagerService::OpenFolder
+  FileManagerService::RevealFileInFolder
+  Fire::FastForward
+  FriendService::GetPlatformFriends
+  GamepadService::AutoSelectGui
+  GamepadService::GetGamepadCursorPosition
+  GamepadService::SetGamepadCursorPosition
+  GenerationService::InternalGenerateMeshAsync
+  GenerationService::LoadModelFromGlbAsync
+  GenericChallengeService::SignalChallengeAbandoned
+  GenericChallengeService::SignalChallengeCompleted
+  GenericChallengeService::SignalChallengeInvalidated
+  GenericChallengeService::SignalChallengeLoaded
+  GenericChallengeService::SignalChallengeRequired
+  GeometryService::HashMeshAsync
+  GeometryService::TranscodeMesh
+  GeometryService::TranscodeModel
+  GlobalSettings::GetFFlagOverrides
+  GlobalSettings::GetFFlags
+  GlobalSettings::SetFFlagOverrides
+  GroupService::PromptJoinCompleted
+  GuiObject::TweenPositionInternal
+  GuiObject::TweenSizeAndPositionInternal
+  GuiObject::TweenSizeInternal
+  GuiService::AddCenterDialog
+  GuiService::AddKey
+  GuiService::AddSpecialKey
+  GuiService::BroadcastNotification
+  GuiService::ClearError
+  GuiService::CloseStatsBasedOnInputString
+  GuiService::ForceTenFootInterface
+  GuiService::GetBrickCount
+  GuiService::GetClosestDialogToPosition
+  GuiService::GetClosestVisibleDialogToPosition
+  GuiService::GetErrorCode
+  GuiService::GetErrorDetails
+  GuiService::GetErrorType
+  GuiService::GetGuiIsVisible
+  GuiService::GetHardwareSafeViewport
+  GuiService::GetNotificationTypeList
+  GuiService::GetRawScreenScale
+  GuiService::GetResolutionScale
+  GuiService::GetSafeZoneOffsets
+  GuiService::GetScreenResolution
+  GuiService::GetUiMessage
+  GuiService::InspectPlayerFromUserIdWithCtx
+  GuiService::IsMemoryTrackerEnabled
+  GuiService::OnNotificationDisplayed
+  GuiService::OnNotificationInteraction
+  GuiService::RemoveCenterDialog
+  GuiService::RemoveKey
+  GuiService::RemoveSpecialKey
+  GuiService::SendUIOcclusionMetricsForQueryRegion
+  GuiService::SetGlobalGuiInset
+  GuiService::SetHardwareSafeAreaInsets
+  GuiService::SetMenuIsOpen
+  GuiService::SetPurchasePromptIsShown
+  GuiService::SetSafeZoneOffsets
+  GuiService::SetTopbarInset
+  GuiService::ShowStatsBasedOnInputString
+  GuiService::ToggleFullscreen
+  GuiService::ToggleGuiIsVisibleForCaptures
+  GuiService::ToggleGuiIsVisibleIfAllowed
+  HeightmapImporterService::CancelImportHeightmap
+  HeightmapImporterService::GetHeightmapPreviewAsync
+  HeightmapImporterService::ImportHeightmap
+  HeightmapImporterService::IsValidColormap
+  HeightmapImporterService::IsValidHeightmap
+  HeightmapImporterService::SetImportHeightmapPaused
+  HopperBin::Disable
+  HopperBin::ToggleSelect
+  HttpRbxApiService::GetAsync
+  HttpRbxApiService::GetAsyncFullUrl
+  HttpRbxApiService::GetDocumentationUrl
+  HttpRbxApiService::PostAsync
+  HttpRbxApiService::PostAsyncFullUrl
+  HttpRbxApiService::RequestAsync
+  HttpRequest::Cancel
+  HttpRequest::Start
+  HttpService::CreateWebStreamClientInternal
+  HttpService::GetHttpEnabled
+  HttpService::GetUserAgent
+  HttpService::JSONDecodeAsync
+  HttpService::JSONEncodeAsync
+  HttpService::RequestInternal
+  HttpService::SetHttpEnabled
+  Humanoid::ApplyAvatarRules
+  Humanoid::CacheDefaults
+  Humanoid::ComputeOriginalSizeForPart
+  Humanoid::ComputeR15BodyBoundingBox
+  Humanoid::GetAccessoryHandleScale
+  Humanoid::PlayEmoteAndGetAnimTrackById
+  Humanoid::SetClickToWalkEnabled
+  HumanoidRigDescription::AutoRig
+  HumanoidRigDescription::GetContainedJointLabels
+  HumanoidRigDescription::GetJoint
+  HumanoidRigDescription::GetJointLabels
+  HumanoidRigDescription::GetJointRangeMax
+  HumanoidRigDescription::GetJointRangeMin
+  HumanoidRigDescription::GetJointSize
+  HumanoidRigDescription::GetR15JointLabels
+  HumanoidRigDescription::GetR6JointLabels
+  HumanoidRigDescription::GetTposeAdjustment
+  HumanoidRigDescription::SetJoint
+  HumanoidRigDescription::SetJointRangeMax
+  HumanoidRigDescription::SetJointRangeMin
+  HumanoidRigDescription::SetJointSize
+  HumanoidRigDescription::SetTposeAdjustment
+  HumanoidRigDescription::ShowVolumes
+  IKControl::Solve
+  ImageButton::SetEnableContentImageSizeChangedEvents
+  ImageLabel::SetEnableContentImageSizeChangedEvents
+  ImportSession::Cancel
+  ImportSession::GetFilename
+  ImportSession::GetStatuses
+  ImportSession::Upload
+  InputAction::GetInputBindings
+  InputContext::GetInputActions
+  InsertService::GetLocalFileContents
+  InsertService::LoadAssetWithFormat
+  InsertService::LoadLocalAsset
+  InsertService::LoadPackageAssetAsync
+  InstanceExtensionsService::CountChildren
+  InstanceFileSyncService::GetSyncingCollaborators
+  InstanceFileSyncService::GetTooltip
+  KeyframeSequenceProvider::GetMemStats
+  LayerCollector::GetGuiObjectsAtPosition
+  LinkingService::DetectUrl
+  LinkingService::GetAndClearLastPendingUrl
+  LinkingService::GetLastLuaUrl
+  LinkingService::IsUrlRegistered
+  LinkingService::OpenUrl
+  LinkingService::RegisterLuaUrl
+  LinkingService::StartLuaUrlDelivery
+  LinkingService::StopLuaUrlDelivery
+  LinkingService::SupportsSwitchToSettingsApp
+  LinkingService::SwitchToSettingsApp
+  LocalStorageService::Flush
+  LocalStorageService::GetItem
+  LocalStorageService::SetItem
+  LocalStorageService::WhenLoaded
+  LocalizationService::GetIsLoadingInternalTranslations
+  LocalizationService::IsLoadingInternalTranslationsSettingChanged
+  LocalizationService::PromptDownloadGameTableToCSV
+  LocalizationService::PromptExportToCSVs
+  LocalizationService::PromptImportFromCSVs
+  LocalizationService::PromptUploadCSVToGameTable
+  LocalizationService::SetRobloxLocaleId
+  LocalizationService::StartTextScraper
+  LocalizationService::StopTextScraper
+  LocalizationTable::SetIsExemptFromUGCAnalytics
+  LogReporterService::ReportLog
+  LogReporterService::ReportMultipleLogs
+  LogReporterService::SubmitStratusBugReport
+  LogService::ExecuteScript
+  LogService::GetHttpResultHistory
+  LogService::RequestHttpResultApproved
+  LogService::RequestServerHttpResult
+  LogService::RequestServerOutput
+  MLService::GetNPCInferenceSpecAsync
+  MLService::RunNPCInferenceAsync
+  MarketplaceService::ClearProductInfoCaches
+  MarketplaceService::GetAvailableSubscriptionProductsAsync
+  MarketplaceService::GetRobuxBalance
+  MarketplaceService::GetSubscriptionPurchaseInfoAsync
+  MarketplaceService::GetUserSubscriptionDetailsInternalAsync
+  MarketplaceService::IsPurchaseSimulated
+  MarketplaceService::PerformBulkPurchase
+  MarketplaceService::PerformCancelSubscription
+  MarketplaceService::PerformPurchase
+  MarketplaceService::PerformPurchaseV2
+  MarketplaceService::PerformSubscriptionPurchase
+  MarketplaceService::PerformSubscriptionPurchaseV2
+  MarketplaceService::PerformSubscriptionPurchaseV3Async
+  MarketplaceService::PerformSubscriptionPurchaseWithRobuxAsync
+  MarketplaceService::PlayerCanMakePurchases
+  MarketplaceService::PrepareCollectiblesPurchase
+  MarketplaceService::PromptCollectiblesPurchase
+  MarketplaceService::PromptNativePurchase
+  MarketplaceService::PromptNativePurchaseWithLocalPlayer
+  MarketplaceService::PromptNativePurchaseWithLocalPlayerWithPaymentSessionId
+  MarketplaceService::PromptNativePurchaseWithPaymentSessionId
+  MarketplaceService::PromptRobloxPurchase
+  MarketplaceService::ReportAssetSale
+  MarketplaceService::ReportRobuxUpsellStarted
+  MarketplaceService::SignalAssetTypePurchased
+  MarketplaceService::SignalCheckPlayerHasRobloxSubscription
+  MarketplaceService::SignalClientPurchaseSuccess
+  MarketplaceService::SignalMockPurchasePremium
+  MarketplaceService::SignalMockPurchaseRobloxSubscription
+  MarketplaceService::SignalPromptBulkPurchaseFinished
+  MarketplaceService::SignalPromptBundlePurchaseFinished
+  MarketplaceService::SignalPromptGamePassPurchaseFinished
+  MarketplaceService::SignalPromptPremiumPurchaseFinished
+  MarketplaceService::SignalPromptProductPurchaseFinished
+  MarketplaceService::SignalPromptPurchaseFinished
+  MarketplaceService::SignalPromptRobloxSubscriptionPurchaseFinished
+  MarketplaceService::SignalPromptSubscriptionPurchaseFinished
+  MarketplaceService::SignalRobuxTransferCompleted
+  MarketplaceService::SignalServerLuaDialogClosed
+  MarketplaceService::SignalUserSubscriptionStatusChanged
+  MaterialGenerationService::GenerateMaterialVariantsAsync
+  MaterialService::GetIsMaterialActionAsToolEnabled
+  MaterialService::GetMaterialOverrideChanged
+  MaterialService::GetOverrideStatus
+  MaterialService::SetCurrentMaterial
+  MaterialService::ToggleMaterialFillToolEnabled
+  MemStorageService::Bind
+  MemStorageService::BindAndFire
+  MemStorageService::Call
+  MemStorageService::Fire
+  MemStorageService::GetItem
+  MemStorageService::HasItem
+  MemStorageService::RemoveItem
+  MemStorageService::SetItem
+  MeshContentProvider::GetContentMemoryData
+  MessageBusConnection::Disconnect
+  MessageBusService::Call
+  MessageBusService::GetLast
+  MessageBusService::GetMessageId
+  MessageBusService::GetProtocolMethodRequestMessageId
+  MessageBusService::GetProtocolMethodResponseMessageId
+  MessageBusService::MakeRequest
+  MessageBusService::Publish
+  MessageBusService::PublishProtocolMethodRequest
+  MessageBusService::PublishProtocolMethodResponse
+  MessageBusService::SetRequestHandler
+  MessageBusService::Subscribe
+  MessageBusService::SubscribeToProtocolMethodRequest
+  MessageBusService::SubscribeToProtocolMethodResponse
+  MetaBreakpoint::GetContextBreakpoints
+  MetaBreakpoint::Remove
+  MetaBreakpoint::SetChildBreakpointEnabledByScriptAndContext
+  MetaBreakpoint::SetContextEnabled
+  MetaBreakpoint::SetContinueExecution
+  MetaBreakpoint::SetEnabled
+  MetaBreakpoint::SetLine
+  MetaBreakpoint::SetRemoveOnHit
+  MetaBreakpointManager::AddBreakpoint
+  MetaBreakpointManager::GetBreakpointById
+  MetaBreakpointManager::RemoveBreakpointById
+  MicroProfilerService::DumpToFileAsync
+  NetworkPeer::InitializeRemoteAllowList
+  Noise::SampleDirectional
+  Noise::SampleUniform
+  NotificationService::ActionEnabled
+  NotificationService::ActionTaken
+  NotificationService::SubscribeToRccEventNamespace
+  NotificationService::SwitchedToAppShellFeature
+  OmniRecommendationsService::ClearSessionId
+  OmniRecommendationsService::GetSessionId
+  OmniRecommendationsService::MakeRequest
+  OpenCloudService::HttpRequestAsync
+  OpenCloudService::RegisterOpenCloud
+  OpenCloudService::RegistrationComplete
+  OutputLink::Print
+  PackageService::UpdateAsync
+  PackageUIService::ConvertToMockPackage
+  PackageUIService::ConvertToPackageAsync
+  PackageUIService::ConvertToPackageClosedCallback
+  PackageUIService::ConvertToPackageUpload
+  PackageUIService::GetPackageInfo
+  PackageUIService::PublishPackage
+  PackageUIService::SetPackageVersion
+  ParabolaAdornment::FindPartOnParabola
+  ParticleEmitter::FastForward
+  PartyEmulatorService::CreateNewParty
+  PartyEmulatorService::DeleteParty
+  PartyEmulatorService::GetEmulatedPartyAsync
+  PartyEmulatorService::GetEmulatedPartyConfiguration
+  PartyEmulatorService::GetIsEmulationEnabled
+  PartyEmulatorService::OnTestPlayerCountChanged
+  PartyEmulatorService::SetIsEmulationEnabled
+  PartyEmulatorService::SetPlayerPartyId
+  PartyEmulatorService::applyPartyIdToPlayer
+  Path2D::GetSegmentCount
+  PerformanceControlService::IsCrossExperienceLaunchFeasible
+  PermissionsService::GetIsThirdPartyAssetAllowed
+  PermissionsService::GetIsThirdPartyPurchaseAllowed
+  PermissionsService::GetIsThirdPartyTeleportAllowed
+  PermissionsService::GetPermissions
+  PermissionsService::SetPermissions
+  PhysicsService::IkSolve
+  PlacesService::StartPlaySolo
+  PlacesService::StopPlaySolo
+  PlatformCloudStorageService::GetUserDataAsync
+  PlatformCloudStorageService::IsUserDataAvailable
+  PlatformCloudStorageService::SetUserDataAsync
+  PlatformFriendsService::GetPartyMembers
+  PlatformFriendsService::IsInviteFriendsEnabled
+  PlatformFriendsService::IsProfileEnabled
+  PlatformFriendsService::ShowInviteFriendsUI
+  PlatformFriendsService::ShowProfile
+  Player::AddToBlockList
+  Player::GetCanManageAsync
+  Player::GetFriendStatus
+  Player::GetUnder13
+  Player::LoadCharacterWithAvatarRules
+  Player::PinStreamingForInstance
+  Player::PinStreamingForInstanceByUniqueId
+  Player::RequestFriendship
+  Player::RevokeFriendship
+  Player::SetBlockListInitialized
+  Player::SetCharacterAppearanceJson
+  Player::SetChatTranslationSettingsLocaleId
+  Player::SetExperienceSettingsLocaleId
+  Player::SetHasRobloxSubscription
+  Player::SetMembershipType
+  Player::SetModerationAccessKey
+  Player::UnpinStreamingForInstance
+  Player::UpdatePlayerBlocked
+  PlayerEmulatorService::GetEmulatedPolicyInfo
+  PlayerEmulatorService::RegionCodeWillHaveAutomaticNonCustomPolicies
+  PlayerEmulatorService::SetEmulatedPolicyInfo
+  PlayerScripts::GetRegisteredComputerCameraMovementModes
+  PlayerScripts::GetRegisteredComputerMovementModes
+  PlayerScripts::GetRegisteredTouchCameraMovementModes
+  PlayerScripts::GetRegisteredTouchMovementModes
+  PlayerViewService::GetDeviceCameraCFrameForSelfView
+  PlayerViewService::OnCameraCFrameReplicationRequest
+  PlayerViewService::UpdateDeviceCFrame
+  Players::CreateThumbnailPlayer
+  Players::ReportAbuseV3
+  Players::ReportAvatarAbuse
+  Players::ReportChatAbuse
+  Players::SetLocalPlayerInfo
+  Plugin::CreateQWidgetPluginGui
+  Plugin::FinishFullLoading
+  Plugin::GetItem
+  Plugin::GetPluginComponent
+  Plugin::GetUri
+  Plugin::Invoke
+  Plugin::IsLoadedFromProject
+  Plugin::OnInvoke
+  Plugin::OnInvokeSuspendOverride
+  Plugin::OnSetItem
+  Plugin::PauseSound
+  Plugin::PlaySound
+  Plugin::ResumeSound
+  Plugin::SetItem
+  Plugin::SetReady
+  Plugin::StartDecalDrag
+  Plugin::StopAllSounds
+  PluginGui::OverrideStudioAction
+  PluginManagementService::GetOTAPluginVersion
+  PluginManagementService::SetAutoUpdate
+  PluginPolicyService::GetPluginPolicy
+  PluginToolbar::CreatePopupButton
+  PluginToolbarButton::SetDropdownActive
+  PolicyService::GetPolicyInfoForServerRobloxOnlyAsync
+  PublishService::CreateAssetAndWaitForAssetId
+  PublishService::CreateAssetOrAssetVersionAndPollAssetWithTelemetryAsync
+  PublishService::CreateAssetOrAssetVersionAndPollAssetWithTelemetryAsyncWithAddParam
+  PublishService::CreateAssetOrAssetVersionAndPollAssetWithTelemetryAsyncWithAddParamErrorJson
+  PublishService::PublishCageMeshAsync
+  PublishService::PublishDescendantAssets
+  PublishService::PublishDescendantAssetsAsync
+  RTAnimationTracker::Step
+  RbxAnalyticsService::AddGlobalPointsField
+  RbxAnalyticsService::AddGlobalPointsTag
+  RbxAnalyticsService::DEPRECATED_TrackEvent
+  RbxAnalyticsService::DEPRECATED_TrackEventWithArgs
+  RbxAnalyticsService::GetClientId
+  RbxAnalyticsService::GetPlaySessionId
+  RbxAnalyticsService::GetSessionId
+  RbxAnalyticsService::ReleaseRBXEventStream
+  RbxAnalyticsService::RemoveGlobalPointsField
+  RbxAnalyticsService::RemoveGlobalPointsTag
+  RbxAnalyticsService::ReportCounter
+  RbxAnalyticsService::ReportInfluxSeries
+  RbxAnalyticsService::ReportStats
+  RbxAnalyticsService::ReportToDiagByCountryCode
+  RbxAnalyticsService::SendEventDeferred
+  RbxAnalyticsService::SendEventImmediately
+  RbxAnalyticsService::SetRBXEvent
+  RbxAnalyticsService::SetRBXEventStream
+  RbxAnalyticsService::TrackEvent
+  RbxAnalyticsService::TrackEventWithArgs
+  RbxAnalyticsService::UpdateHeartbeatObject
+  ReflectionService::GetPropertyNames
+  ReflectionService::GetStyledPropertyNames
+  RemoteCommandService::ExecuteCommand
+  RemoteCommandService::ExecuteCommandAsync
+  ReplicatedFirst::IsDefaultLoadingGuiRemoved
+  ReplicatedFirst::IsFinishedReplicating
+  ReplicatedFirst::SetDefaultLoadingGuiRemoved
+  RibbonNotificationService::OnNotificationUpdateFromPlugin
+  RunService::GetControlAndVariantRolloutFlags
+  RunService::GetCoreScriptVersion
+  RunService::GetRobloxClientChannel
+  RunService::GetRobloxGuiFocused
+  RunService::GetRobloxVersion
+  RunService::GetTotalScriptPlusExecutionTime
+  RunService::Set3dRenderingEnabled
+  RunService::SetRobloxGuiFocused
+  RunService::getThrottleFramerateEnabled
+  RunService::setThrottleFramerateEnabled
+  SafetyService::DecodeAvatarMovementProto
+  SafetyService::ReportCapturesUIClose
+  SafetyService::ReportCapturesUIOpen
+  SafetyService::ReportChatLineReportingClose
+  SafetyService::ReportChatLineReportingOpen
+  SafetyService::ReportChatSuspensionDialogClose
+  SafetyService::ReportChatSuspensionDialogOpen
+  SafetyService::ReportMenuTabClose
+  SafetyService::ReportMenuTabOpen
+  SafetyService::ReportPartyChatWindowClose
+  SafetyService::ReportPartyChatWindowOpen
+  SafetyService::TakeScreenshot
+  ScriptContext::AddCoreScriptLocal
+  ScriptContext::CompressLuaApp
+  ScriptContext::GetLuauHeapInstanceReferenceReport
+  ScriptContext::GetLuauHeapMemoryReport
+  ScriptContext::ReportLuaRequireCount
+  ScriptDocument::GetInternalUri
+  ScriptEditorService::EditSourceAsyncWithRanges
+  ScriptEditorService::ForceReloadSource
+  ScriptEditorService::IsAutocompleteCallbackRegistered
+  ScriptEditorService::IsScriptAnalysisCallbackRegistered
+  ScriptEditorService::StripComments
+  ScriptProfilerService::SaveScriptProfilingData
+  ScriptRegistrationService::GetSourceContainerByScriptGuid
+  ScrollingFrame::ClearInertialScrolling
+  ScrollingFrame::GetSampledInertialVelocity
+  ScrollingFrame::ScrollToTop
+  Selection::AddFocusCallback
+  Selection::ClearTerrainSelectionHack
+  Selection::SetTerrainSelectionHack
+  ServiceVisibilityService::SetServiceVisibilityPreference
+  SessionService::AcquireContextFocus
+  SessionService::GenerateSessionInfoString
+  SessionService::GetBreadcrumbs
+  SessionService::GetCreatedTimestampUtcMs
+  SessionService::GetHistory
+  SessionService::GetMetadata
+  SessionService::GetRootSID
+  SessionService::GetSessionID
+  SessionService::GetSessionTag
+  SessionService::IsContextFocused
+  SessionService::ReleaseContextFocus
+  SessionService::RemoveMetadata
+  SessionService::RemoveSession
+  SessionService::RemoveSessionsWithMetadataKey
+  SessionService::ReplaceSession
+  SessionService::SessionExists
+  SessionService::SetMetadata
+  SessionService::SetSession
+  SlimDebugSettings::GetTintMode
+  SlimDebugSettings::SetTintMode
+  Smoke::FastForward
+  SmoothVoxelsUpgraderService::Cancel
+  SmoothVoxelsUpgraderService::Start
+  SocialService::InvokeGameInvitePromptClosed
+  SocialService::InvokeIrisInvite
+  SocialService::InvokeIrisInvitePromptClosed
+  SocialService::InvokeShareSheetClosed
+  SocialService::PromptRsvpToEventCompleted
+  SocialService::SignalFeedbackSubmissionCompleted
+  SocialService::SignalFeedbackSubmissionPermissionDenied
+  SocialService::UpdatePlayerPartyData
+  Sound::GetUnderlyingAudioPlayer
+  SoundService::BeginRecording
+  SoundService::EndRecording
+  SoundService::GetAudioApiByDefault
+  SoundService::GetAudioInstances
+  SoundService::GetInputDevice
+  SoundService::GetInputDevices
+  SoundService::GetOutputDevice
+  SoundService::GetOutputDevices
+  SoundService::GetRecordingDevices
+  SoundService::GetSoundMemoryData
+  SoundService::InsertAsset
+  SoundService::SetAudioApiByDefault
+  SoundService::SetOutputDevice
+  SoundService::SetRecordingDevice
+  SoundService::SetSoundEnabled
+  Sparkles::FastForward
+  StartPageService::generateTempUrlInContentProvider
+  StartPageService::getDaysSinceFirstUserLogin
+  StartPageService::getLocalGamesFromRegistry
+  StartPageService::getRecentAPIGamesFromRegistry
+  StartPageService::getTempUrlInContentProvider
+  StartPageService::isTutorialBannerClosed
+  StartPageService::isTutorialPopupClosed
+  StartPageService::openLink
+  StartPageService::openLocalFile
+  StartPageService::openPlace
+  StartPageService::removeAPIGameFromRegistry
+  StartPageService::removeLocalFileFromRegistry
+  StartPageService::setTutorialBannerClosed
+  StartPageService::setTutorialPopupClosed
+  StartPageService::shouldShowMacOSDeprecationWarning
+  StartPageService::shouldShowWinOSDeprecationWarning
+  StartPageService::startTutorial
+  StarterGui::RegisterGetCore
+  StarterGui::RegisterSetCore
+  StarterPlayer::ClearDefaults
+  StartupMessageService::GetStartupMessage
+  Stats::GetBrowserTrackerId
+  Stats::GetPaginatedMemoryByTexture
+  StopWatchReporter::FinishTask
+  StopWatchReporter::SendReport
+  StopWatchReporter::StartTask
+  StudioActionOverride::Release
+  StudioAssetService::AutoSetupAvatarAsync
+  StudioAssetService::AutoSetupSerializedAvatarAsync
+  StudioAssetService::CancelAutoSetupAvatarAsync
+  StudioAssetService::ConvertToPackageUpload
+  StudioAssetService::DEPRECATED_SerializeInstances
+  StudioAssetService::FireOnUGCSubmitCompleted
+  StudioAssetService::PromptSaveInstanceToRobloxAsync
+  StudioAssetService::PublishPackage
+  StudioAssetService::RequestAvatarAutosetupAsync
+  StudioAssetService::ResolveSaveInstanceToRoblox
+  StudioAssetService::SerializeInstances
+  StudioAssetService::ShowSaveToRoblox
+  StudioAssetService::UpdatePublishedPackage
+  StudioCallout::SetOnNextClicked
+  StudioCameraService::InFocusMode
+  StudioCameraService::InterpolateView
+  StudioCameraService::SetFocusLock
+  StudioDeviceEmulatorService::EmulatePCDeviceWithResolution
+  StudioDeviceEmulatorService::GetCurrentDeviceId
+  StudioDeviceEmulatorService::GetCurrentOrientation
+  StudioDeviceEmulatorService::GetMaxNumTouches
+  StudioDeviceEmulatorService::GetTouchInBounds
+  StudioDeviceEmulatorService::GetTouchPosition
+  StudioDeviceEmulatorService::HasDeviceWithId
+  StudioDeviceEmulatorService::SetCurrentDeviceId
+  StudioDeviceEmulatorService::SetCurrentOrientation
+  StudioPublishService::ClearUploadNames
+  StudioPublishService::CloseAfterPublish
+  StudioPublishService::PublishAs
+  StudioPublishService::PublishThenTurnOnTeamCreate
+  StudioPublishService::RefreshDocumentDisplayName
+  StudioPublishService::RegisterPublishHold
+  StudioPublishService::SaveOrPublishPlaceToRobloxIsCanceled
+  StudioPublishService::SetTeamCreateOnPublishInfo
+  StudioPublishService::SetUniverseDisplayName
+  StudioPublishService::SetUploadNames
+  StudioPublishService::ShowSaveOrPublishPlaceToRoblox
+  StudioSdkService::GetSdk
+  StudioSdkService::SetSdk
+  StudioService::AnimationIdSelected
+  StudioService::CopyToClipboard
+  StudioService::GetBadgeConfigureUrl
+  StudioService::GetBadgeUploadUrl
+  StudioService::GetPlaceIsPersistedToCloud
+  StudioService::GetResourceByCategory
+  StudioService::GetStartupAssetId
+  StudioService::GetStartupPluginId
+  StudioService::GetTermsOfUseUrl
+  StudioService::HasInternalPermission
+  StudioService::IsPluginInstalled
+  StudioService::IsPluginUpToDate
+  StudioService::OpenInBrowser_DONOTUSE
+  StudioService::SetPluginEnabled
+  StudioService::ShowPublishToRoblox
+  StudioService::TryInstallPlugin
+  StudioService::UninstallPlugin
+  StudioService::UpdatePluginManagement
+  StudioWidget::SetFixedSize
+  StudioWidgetsService::ApplyFillInBox
+  StudioWidgetsService::ApplyHighlight
+  StudioWidgetsService::ApplyShadows
+  StudioWidgetsService::ApplySpotlight
+  StudioWidgetsService::GetWidgetFromLabel
+  StudioWidgetsService::GetWidgetFromPluginGui
+  StudioWidgetsService::HideSpotlight
+  StyleRule::GetPropertiesResolved
+  StyleRule::GetPropertyResolved
+  StylingService::GetAppliedStyles
+  StylingService::GetStyleInfo
+  StylingService::GetStyleSheetDerivesChain
+  StylingService::GetStyleSheetInfo
+  StylingService::UpdateUnitTestOnly
+  SystemThemeService::getSystemTheme
+  SystemThemeService::getSystemThemeAsync
+  SystemThemeService::isSystemThemeAvailable
+  SystemThemeService::setTheme
+  TeamCreateService::CloseGameIfUserDoesntHavePerms
+  TelemetryService::LogCounter
+  TelemetryService::LogDurationEvent
+  TelemetryService::LogDurationEventWithTimestamp
+  TelemetryService::LogEvent
+  TelemetryService::LogStat
+  TeleportService::Block
+  TeleportService::GetThirdPartyTeleportInfo
+  TeleportService::PromptExperienceDetailsCompleted
+  TeleportService::TeleportCancel
+  TeleportService::TeleportReconnect
+  TeleportService::TeleportTrustedBackForth
+  TeleportService::TeleportTrustedBackHistory
+  TeleportService::TeleportedPlacesBackHistory
+  TeleportService::TeleportedUniversesBackHistory
+  TeleportService::UnblockAsync
+  Terrain::CanSmoothVoxelsBeUpgraded
+  Terrain::CreateVoxelBuffer_beta
+  Terrain::DrawBufferAsync
+  Terrain::GetTerrainWireframe
+  Terrain::ReadBufferAsync
+  Terrain::ReplaceMaterialInTransform
+  Terrain::ReplaceMaterialInTransformSubregion
+  Terrain::SetMaterialInTransform
+  Terrain::SetMaterialInTransformSubregion
+  Terrain::SmoothRegion
+  TerrainRegion::ApplyTransform
+  TerrainRegion::ApplyTransformSubregion
+  TerrainRegion::GetRegionWireframe
+  TestService::ConvertSlimAcrToObj
+  TestService::CreateAndSavePropertySet
+  TestService::CreateExtraAssetsFileFromPropertySet
+  TestService::FetchExtraAssets
+  TestService::TranscodePropertySet
+  TextBox::ResetKeyboardMode
+  TextBox::SetTextFromInput
+  TextButton::SetTextFromInput
+  TextChannel::SendInternalAsync
+  TextChannel::SendPresetAsync
+  TextChatService::CanUsersWhisperAsync
+  TextChatService::GetPresetsAsync
+  TextChatService::HasAllocatedUniverseChatContext
+  TextChatService::OnUserChatSettingUpdateAsync
+  TextChatService::SendEnableChatButtonClicked
+  TextChatService::SendEnableChatButtonShown
+  TextChatService::SendExpChatLoadSuccess
+  TextChatService::SendExpChatMessageClientRendered
+  TextChatService::SendExpChatWindowScroll
+  TextChatService::SendExpChatWindowStatusChange
+  TextChatService::SendUniverseChatMessageAsync
+  TextChatService::SendUniverseChatPresetAsync
+  TextChatService::setModerationModeEnabled
+  TextLabel::SetTextFromInput
+  TextService::GetFontMemoryData
+  TextService::SetResolutionScale
+  TextureGenerationPartGroup::GetInstances
+  TextureGenerationPartGroup::GetMeshIdsHash
+  TextureGenerationService::CancelGenerationRequest
+  TextureGenerationService::CreatePartGroup
+  TextureGenerationService::GenerateTexture
+  TextureGenerationService::GetQuotasAsync
+  TextureGenerationService::PreviewTexture
+  TextureGenerationUnwrappingRequest::ApplyToDataModel
+  TextureGenerationUnwrappingRequest::GetPartGroup
+  ThirdPartyUserService::GetUserPlatformName
+  ThirdPartyUserService::GetVoiceChatRestrictionStatus
+  ThirdPartyUserService::HaveActiveUser
+  ThirdPartyUserService::IsAccountSwitchingSupported
+  ThirdPartyUserService::IsChatRestrictionSupported
+  ThirdPartyUserService::IsSingleSignOnSupported
+  ThirdPartyUserService::RegisterActiveUser
+  ThirdPartyUserService::ShowAccountPicker
+  ThreadState::GetFrame
+  ToastNotificationService::HideNotification
+  ToastNotificationService::ShowNotification
+  TracerService::FinishSpan
+  TracerService::StartSpan
+  TrackerLodController::getExtrapolation
+  TrackerLodController::getVideoLod
+  TrackerLodController::isAudioEnabled
+  TrackerLodController::isVideoEnabled
+  Translator::RobloxOnlyTranslate
+  TutorialService::GetMainViewSessionId
+  TutorialService::HasUserCompletedTutorial
+  TutorialService::HideWidgets
+  TutorialService::PromptClosePlace
+  TutorialService::SetTutorialCompletionStatus
+  TutorialService::ShouldLaunchTutorial
+  TutorialService::ShowWidgets
+  UGCValidationService::CalculateAverageEditableCageMeshDistance
+  UGCValidationService::CalculateBodyMaxCageDistance
+  UGCValidationService::CalculateEditableMeshInsideMeshPercentage
+  UGCValidationService::CalculateEditableMeshModifiedCageBoundingBox
+  UGCValidationService::CalculateEditableMeshNumModifiedCageUVsInSet
+  UGCValidationService::CalculateEditableMeshTotalSurfaceArea
+  UGCValidationService::CalculateEditableMeshUniqueUVCount
+  UGCValidationService::CanLoadAsset
+  UGCValidationService::CheckEditableMeshInCameraFrustum
+  UGCValidationService::CreateEditableImageFromBinaryStringRobloxOnly
+  UGCValidationService::CreateEditableImageOriginalSizeAsync
+  UGCValidationService::CreateEditableMeshFromBinaryStringRobloxOnly
+  UGCValidationService::DoesMeshHaveSkinningData
+  UGCValidationService::DoesSurfaceAppearanceMatchTexturePackAsync
+  UGCValidationService::FetchAssetWithFormat
+  UGCValidationService::GetBoundingBoxManipulationData
+  UGCValidationService::GetDynamicHeadEditableMeshInactiveControls
+  UGCValidationService::GetEditableCagingRelevancyMetrics
+  UGCValidationService::GetEditableImageSize
+  UGCValidationService::GetEditableMeshMaxNearbyVerticesCollisions
+  UGCValidationService::GetEditableMeshSkinningTransferJointsInfo
+  UGCValidationService::GetEditableMeshTriCount
+  UGCValidationService::GetEditableMeshVertColors
+  UGCValidationService::GetEditableMeshVerticesSimilarityRate
+  UGCValidationService::GetEditableMeshVerts
+  UGCValidationService::GetExpectedTposeRotation
+  UGCValidationService::GetFacsDrivenJointNamesFromEditableMesh
+  UGCValidationService::GetLayeredClothingPostDeformationSize
+  UGCValidationService::GetMaximalJointDistancesWithinFacs
+  UGCValidationService::GetMeshDataBinaryString
+  UGCValidationService::GetMeshVerts
+  UGCValidationService::GetMinAndMaxMeshSizeAcrossAllFacs
+  UGCValidationService::GetPropertyValue
+  UGCValidationService::GetSkinnedJointNamesFromEditableMesh
+  UGCValidationService::IsDeformedLayeredClothingOutOfRenderBounds
+  UGCValidationService::IsEditableMeshNumCoplanarIntersectionsOverLimit
+  UGCValidationService::RegisterAlternateMesh
+  UGCValidationService::RegisterUGCValidationFunction
+  UGCValidationService::ReportUGCValidationCounter
+  UGCValidationService::ReportUGCValidationFailureTelemetry
+  UGCValidationService::ReportUGCValidationTelemetry
+  UGCValidationService::ResetCollisionFidelity
+  UGCValidationService::ResetCollisionFidelityWithEditableMeshDataLua
+  UGCValidationService::SetMeshIdBlocking
+  UGCValidationService::ValidateDynamicHeadEditableMesh
+  UGCValidationService::ValidateEditableMeshCageMeshIntersection
+  UGCValidationService::ValidateEditableMeshCageNonManifoldAndHoles
+  UGCValidationService::ValidateEditableMeshCageUVCoincident
+  UGCValidationService::ValidateEditableMeshCageUVTriangleArea
+  UGCValidationService::ValidateEditableMeshFacialBounds
+  UGCValidationService::ValidateEditableMeshFacialExpressiveness
+  UGCValidationService::ValidateEditableMeshFullBodyCageDeletion
+  UGCValidationService::ValidateEditableMeshMisMatchUV
+  UGCValidationService::ValidateEditableMeshOverlappingVertices
+  UGCValidationService::ValidateEditableMeshTriangleArea
+  UGCValidationService::ValidateEditableMeshTriangles
+  UGCValidationService::ValidateEditableMeshUVDuplicates
+  UGCValidationService::ValidateEditableMeshUVSpace
+  UGCValidationService::ValidateEditableMeshUVValuesInReference
+  UGCValidationService::ValidateEditableMeshUniqueUVCount
+  UGCValidationService::ValidateEditableMeshVertColors
+  UGCValidationService::ValidateHSRMeshIds
+  UGCValidationService::ValidateLeaderSkinnedVertsNearCageIslands
+  UGCValidationService::ValidatePartBBoxAfterFullFacs
+  UGCValidationService::ValidatePropertiesSensible
+  UGCValidationService::ValidateSkinnedEditableMesh
+  UniqueIdLookupService::GetInstanceByRfc4122String
+  UniqueIdLookupService::GetOrCreateUniqueId
+  UnvalidatedAssetService::AppendTempAssetId
+  UnvalidatedAssetService::AppendVantagePoint
+  UnvalidatedAssetService::UpgradeTempAssetId
+  UserGameSettings::GetDefaultFramerateCap
+  UserGameSettings::GetTutorialState
+  UserGameSettings::ResetOnboardingCompleted
+  UserGameSettings::SetTutorialState
+  UserInputService::GetDeviceLevel
+  UserInputService::GetDeviceType
+  UserInputService::GetPasteText
+  UserInputService::GetPlatform
+  UserInputService::SendAppUISizes
+  UserSettings::SaveState
+  VRService::IsMaquettes
+  VRService::IsVRAppBuild
+  VideoCaptureService::GetCameraDevices
+  VideoFrame::SetStudioPreview
+  VideoPlayer::SetStudioPreview
+  ViewportFrame::CaptureSnapshotAsync
+  VirtualInputManager::Dump
+  VirtualInputManager::HandleGamepadAxisInput
+  VirtualInputManager::HandleGamepadButtonInput
+  VirtualInputManager::HandleGamepadConnect
+  VirtualInputManager::HandleGamepadDisconnect
+  VirtualInputManager::SendAccelerometerEvent
+  VirtualInputManager::SendGravityEvent
+  VirtualInputManager::SendGyroscopeEvent
+  VirtualInputManager::SendKeyEvent
+  VirtualInputManager::SendMouseButtonEvent
+  VirtualInputManager::SendMouseMoveDeltaEvent
+  VirtualInputManager::SendMouseMoveEvent
+  VirtualInputManager::SendMouseWheelEvent
+  VirtualInputManager::SendScroll
+  VirtualInputManager::SendTextInputCharacterEvent
+  VirtualInputManager::SendTouchEvent
+  VirtualInputManager::SetInputTypesToIgnore
+  VirtualInputManager::StartPlaying
+  VirtualInputManager::StartPlayingJSON
+  VirtualInputManager::StartRecording
+  VirtualInputManager::StopPlaying
+  VirtualInputManager::StopRecording
+  VirtualInputManager::WaitForInputEventsProcessed
+  VirtualInputManager::sendRobloxEvent
+  VirtualInputManager::sendThemeChangeEvent
+  VoiceChatInternal::GetChannelId
+  VoiceChatInternal::GetGroupId
+  VoiceChatInternal::GetSessionId
+  VoiceChatInternal::GetVoiceExperienceId
+  VoiceChatInternal::IsContextVoiceEnabled
+  VoiceChatInternal::LogPublisherWebRTCStats
+  VoiceChatInternal::LogSubscriptionWebRTCStats
+  VoiceChatInternal::SubscribeBlock
+  VoiceChatInternal::SubscribeRetry
+  VoiceChatInternal::SubscribeUnblock
+  VoiceChatService::getInternalChannelId
+  VoiceChatService::getInternalGroupId
+  VoiceChatService::getInternalPublishPause
+  VoiceChatService::getInternalSessionId
+  VoiceChatService::getInternalSubscribePause
+  VoiceChatService::getInternalSubscribePauseAll
+  VoiceChatService::getInternalVoiceChatApiVersion
+  VoiceChatService::isInternalPublishPaused
+  VoiceChatService::joinVoice
+  VoiceChatService::lastVoiceChatStats
+  VoiceChatService::leaveVoice
+  VoiceChatService::notifyServerACSCleanup
+  VoiceChatService::rejoinVoice
+  VoxelBuffer::ClearAsync
+  VoxelBuffer::DrawBufferAsync
+  VoxelBuffer::FromHeightmapAsync
+  VoxelBuffer::GetSizeInVoxels
+  VoxelBuffer::NormalizeAsync
+  VoxelBuffer::ReadVoxels
+  VoxelBuffer::UnclampAsync
+  VoxelBuffer::WriteVoxels
+  WebViewService::CloseWindow
+  WebViewService::IsAvailable
+  WebViewService::MutateWindow
+  WebViewService::OpenWindow
+  WebViewService::OpenWindowV2
+  Wire::RenameToDefault
+  Workspace::CalculateJumpDistance
+  Workspace::CalculateJumpHeight
+  Workspace::CalculateJumpPower
+  Workspace::SetAvatarUnificationMode
+  Workspace::SetMeshPartHeadsAndAccessories
+  WorkspaceAnnotation::GetAbsolutePosition
+  WorkspaceAnnotation::SetAdorneeOffsetFromAbsolutePosition
+  WorldRoot::CacheCurrentTerrain
+  WorldRoot::ClearCachedTerrain
+  WorldRoot::GetAwakeContactNormals
+  WorldRoot::GetAwakeContactParts
+  WorldRoot::GetAwakeContactPositions
+  WorldRoot::GetAwakeRootParts
+  WorldRoot::RaycastCachedTerrain
+  WorldRoot::SetInsertPoint
+
+--- security:RobloxSecurity (8 methods) ---
+  LoginService::Logout
+  LoginService::PromptLogin
+  Player::AddReplicationFocusPosition
+  Player::GetGameSessionID
+  Player::OverrideStreamingRadii
+  Player::PromptSecurityChallengeAsync
+  Player::RemoveReplicationFocusPosition
+  SlimContentProvider::GetContentMemoryData
+
+--- too_many_args:5/4 (14 methods) ---
+  AnalyticsService::LogProgressionCompleteEvent
+  AnalyticsService::LogProgressionFailEvent
+  AnalyticsService::LogProgressionStartEvent
+  ContextActionService::BindActionAtPriority
+  DataStore::ListVersionsAsync
+  EditableImage::DrawImageTransformed
+  EditableImage::DrawRectangle
+  GenerationService::StartVideoGenSessionAsync
+  GenerationService::UpdateVideoGenSessionPromptAsync
+  HttpService::PostAsync
+  LocalizationTable::SetEntryValue
+  MicroProfilerService::GetDataInRange
+  RecommendationService::LogPreferenceEvent
+  TeleportService::TeleportToSpawnByName
+
+--- too_many_args:6/4 (10 methods) ---
+  AnalyticsService::LogFunnelStepEvent
+  AnalyticsService::LogProgressionEvent
+  EditableImage::DrawCircle
+  EditableImage::DrawLine
+  GuiObject::TweenPosition
+  GuiObject::TweenSize
+  MicroProfilerService::ProcessCommand
+  TeleportService::TeleportToPlaceInstance
+  TeleportService::TeleportToPrivateServer
+  TweenService::SmoothDamp
+
+--- too_many_args:7/4 (1 methods) ---
+  GuiObject::TweenSizeAndPosition
+
+--- too_many_args:8/4 (1 methods) ---
+  AnalyticsService::LogEconomyEvent
+
+--- unsupported_param:AdReward(reward) (1 methods) ---
+  AdService::ShowRewardedVideoAdAsync
+
+--- unsupported_param:Array(accessories) (1 methods) ---
+  HumanoidDescription::SetAccessories
+
+--- unsupported_param:Array(actions) (1 methods) ---
+  EditableMesh::SetFacsCorrectivePose
+
+--- unsupported_param:Array(assetTypes) (1 methods) ---
+  AvatarEditorService::GetInventoryAsync
+
+--- unsupported_param:Array(boneIDs) (1 methods) ---
+  EditableMesh::SetVertexBones
+
+--- unsupported_param:Array(boneIds) (1 methods) ---
+  EditableMesh::SetFacsPose
+
+--- unsupported_param:Array(boneWeights) (1 methods) ---
+  EditableMesh::SetVertexBoneWeights
+
+--- unsupported_param:Array(captures) (1 methods) ---
+  CaptureService::PromptSaveCapturesToGallery
+
+--- unsupported_param:Array(cframes) (1 methods) ---
+  GeometryService::SweepPartAsync
+
+--- unsupported_param:Array(contentIdList) (1 methods) ---
+  ContentProvider::PreloadAsync
+
+--- unsupported_param:Array(controlPoints) (1 methods) ---
+  Path2D::SetControlPoints
+
+--- unsupported_param:Array(equippedEmotes) (1 methods) ---
+  HumanoidDescription::SetEquippedEmotes
+
+--- unsupported_param:Array(ids) (4 methods) ---
+  EditableMesh::SetFaceColors
+  EditableMesh::SetFaceNormals
+  EditableMesh::SetFaceUVs
+  EditableMesh::SetFaceVertices
+
+--- unsupported_param:Array(keys) (4 methods) ---
+  FloatCurve::SetKeys
+  HapticEffect::SetWaveformKeys
+  RotationCurve::SetKeys
+  ValueCurve::SetKeys
+
+--- unsupported_param:Array(layers) (1 methods) ---
+  AssetService::ComposeDecalAsync
+
+--- unsupported_param:Array(lineItems) (1 methods) ---
+  MarketplaceService::PromptBulkPurchase
+
+--- unsupported_param:Array(points) (2 methods) ---
+  WireframeHandleAdornment::AddLines
+  WireframeHandleAdornment::AddPath
+
+--- unsupported_param:Array(targetLocales) (1 methods) ---
+  TextService::FilterAndTranslateStringAsync
+
+--- unsupported_param:Array(userIds) (1 methods) ---
+  AudioDeviceInput::SetUserIdAccessList
+
+--- unsupported_param:Array(vertexIds) (1 methods) ---
+  EditableMesh::AddFace
+
+--- unsupported_param:CatalogSearchParams(searchParameters) (1 methods) ---
+  AvatarEditorService::SearchCatalogAsync
+
+--- unsupported_param:CoordinateFrame?(cageOrigin) (1 methods) ---
+  WrapDeformer::SetCageMeshContent
+
+--- unsupported_param:Dictionary(actionEventDetails) (1 methods) ---
+  RecommendationService::LogActionEvent
+
+--- unsupported_param:Dictionary(agentParameters) (1 methods) ---
+  PathfindingService::CreatePath
+
+--- unsupported_param:Dictionary(attributes) (2 methods) ---
+  DataStoreIncrementOptions::SetMetadata
+  DataStoreSetOptions::SetMetadata
+
+--- unsupported_param:Dictionary(autoSetupParams) (1 methods) ---
+  AvatarCreationService::AutoSetupAvatarAsync
+
+--- unsupported_param:Dictionary(avatarGeneration2dPreviewParams) (1 methods) ---
+  AvatarCreationService::GenerateAvatar2DPreviewAsync
+
+--- unsupported_param:Dictionary(avatarGenerationParams) (1 methods) ---
+  AvatarCreationService::GenerateAvatarAsync
+
+--- unsupported_param:Dictionary(boneProperties) (1 methods) ---
+  EditableMesh::AddBone
+
+--- unsupported_param:Dictionary(conditions) (1 methods) ---
+  StyleQuery::SetConditions
+
+--- unsupported_param:Dictionary(config) (4 methods) ---
+  ModerationService::CreateReviewableContentAsync
+  ModerationService::InternalRequestReviewableContentReviewAsync
+  Players::BanAsync
+  Players::UnbanAsync
+
+--- unsupported_param:Dictionary(connectParams) (1 methods) ---
+  RealtimeMedia::ConnectAsync
+
+--- unsupported_param:Dictionary(content) (1 methods) ---
+  AssetService::CreateSurfaceAppearanceAsync
+
+--- unsupported_param:Dictionary(context) (5 methods) ---
+  LogService::Error
+  LogService::Info
+  LogService::Log
+  LogService::Output
+  LogService::Warn
+
+--- unsupported_param:Dictionary(curve) (4 methods) ---
+  AudioEmitter::SetAngleAttenuation
+  AudioEmitter::SetDistanceAttenuation
+  AudioListener::SetAngleAttenuation
+  AudioListener::SetDistanceAttenuation
+
+--- unsupported_param:Dictionary(customFields) (2 methods) ---
+  AnalyticsService::LogCustomEvent
+  AnalyticsService::LogOnboardingFunnelStepEvent
+
+--- unsupported_param:Dictionary(emotes) (1 methods) ---
+  HumanoidDescription::SetEmotes
+
+--- unsupported_param:Dictionary(experimentalFeatures) (1 methods) ---
+  DataStoreOptions::SetExperimentalFeatures
+
+--- unsupported_param:Dictionary(generateRecommendationItemListRequest) (1 methods) ---
+  RecommendationService::GenerateItemListAsync
+
+--- unsupported_param:Dictionary(impressionEventDetails) (1 methods) ---
+  RecommendationService::LogImpressionEvent
+
+--- unsupported_param:Dictionary(notificationInfo) (1 methods) ---
+  GuiService::SendNotification
+
+--- unsupported_param:Dictionary(options) (2 methods) ---
+  AssetService::CreateMeshPartAsync
+  GeometryService::CreateSolidPrimitive
+
+--- unsupported_param:Dictionary(outfitOptions) (1 methods) ---
+  AvatarEditorService::PromptCreateOutfit
+
+--- unsupported_param:Dictionary(projection) (1 methods) ---
+  EditableImage::DrawImageProjected
+
+--- unsupported_param:Dictionary(properties) (1 methods) ---
+  StyleRule::SetPropertyTransitions
+
+--- unsupported_param:Dictionary(requestOptions) (2 methods) ---
+  HttpRbxApiService::RequestLimitedAsync
+  HttpService::CreateWebStreamClient
+
+--- unsupported_param:Dictionary(styleProperties) (1 methods) ---
+  StyleRule::SetProperties
+
+--- unsupported_param:Dictionary(testOptions) (1 methods) ---
+  TestService::RegisterTest
+
+--- unsupported_param:Dictionary(triggers) (1 methods) ---
+  GenerationService::UpdateVideoGenSessionTriggersAsync
+
+--- unsupported_param:Dictionary(updateRecommendationItemRequest) (1 methods) ---
+  RecommendationService::UpdateItemAsync
+
+--- unsupported_param:Dictionary?(editableImageOptions) (2 methods) ---
+  AssetService::CreateEditableImage
+  AssetService::CreateEditableImageAsync
+
+--- unsupported_param:Dictionary?(editableMeshOptions) (2 methods) ---
+  AssetService::CreateEditableMesh
+  AssetService::CreateEditableMeshAsync
+
+--- unsupported_param:Dictionary?(options) (2 methods) ---
+  SocialService::PromptFeedbackSubmissionAsync
+  VideoService::CreateVideoSamplerAsync
+
+--- unsupported_param:Dictionary?(requestParameters) (1 methods) ---
+  AssetService::SavePlaceAsync
+
+--- unsupported_param:Function(callback) (1 methods) ---
+  Animator::RegisterEvaluationParallelCallback
+
+--- unsupported_param:Function(callbackFunction) (1 methods) ---
+  Chat::RegisterChatCallback
+
+--- unsupported_param:Function(function) (6 methods) ---
+  DataModel::BindToClose
+  DragDetector::SetDragStyleFunction
+  DragDetector::SetPermissionPolicyFunction
+  PluginGui::BindToClose
+  RunService::BindToRenderStep
+  UIDragDetector::SetDragStyleFunction
+
+--- unsupported_param:Function(functionToBind) (1 methods) ---
+  ContextActionService::BindAction
+
+--- unsupported_param:Function(onAcceptedCallback) (1 methods) ---
+  CaptureService::PromptShareCapture
+
+--- unsupported_param:Function(onCaptureReady) (3 methods) ---
+  CaptureService::CaptureScreenshot
+  CaptureService::StartVideoCaptureAsync
+  CaptureService::TakeScreenshotCaptureAsync
+
+--- unsupported_param:Instances(derives) (1 methods) ---
+  StyleSheet::SetDerives
+
+--- unsupported_param:Instances(objects) (2 methods) ---
+  Workspace::JoinToOutsiders
+  Workspace::UnjoinFromOutsiders
+
+--- unsupported_param:Instances(partList) (2 methods) ---
+  WorldRoot::ArePartsTouchingOthers
+  WorldRoot::BulkMoveTo
+
+--- unsupported_param:Instances(parts) (3 methods) ---
+  BasePart::IntersectAsync
+  BasePart::SubtractAsync
+  BasePart::UnionAsync
+
+--- unsupported_param:Instances(players) (2 methods) ---
+  TeleportService::TeleportAsync
+  TeleportService::TeleportPartyAsync
+
+--- unsupported_param:Instances(rules) (1 methods) ---
+  StyleBase::SetStyleRules
+
+--- unsupported_param:Path2DControlPoint(point) (2 methods) ---
+  Path2D::InsertControlPoint
+  Path2D::UpdateControlPoint
+
+--- unsupported_param:Region3(region) (9 methods) ---
+  Terrain::ClearVoxelsAsync_beta
+  Terrain::FillRegion
+  Terrain::IterateVoxelsAsync_beta
+  Terrain::ModifyVoxelsAsync_beta
+  Terrain::ReadVoxelsAsync_beta
+  Terrain::ReplaceMaterial
+  Terrain::WriteVoxelChannels
+  Terrain::WriteVoxels
+  Terrain::WriteVoxelsAsync_beta
+
+--- unsupported_param:Region3int16(region) (1 methods) ---
+  Terrain::CopyRegion
+
+--- unsupported_param:SharedTable?(st) (1 methods) ---
+  SharedTableRegistry::SetSharedTable
+
+--- unsupported_param:Tuple(args) (3 methods) ---
+  ExecutedRemoteCommand::RunMoreCode
+  ExecutedRemoteCommand::SendUpdate
+  RemoteCommandService::SendUpdate
+
+--- unsupported_param:Tuple(arguments) (7 methods) ---
+  BindableEvent::Fire
+  RemoteEvent::FireAllClients
+  RemoteEvent::FireClient
+  RemoteEvent::FireServer
+  UnreliableRemoteEvent::FireAllClients
+  UnreliableRemoteEvent::FireClient
+  UnreliableRemoteEvent::FireServer
+
+--- unsupported_param:Tuple(keyCodesForActivation) (1 methods) ---
+  ContextActionService::BindActivate
+
+--- unsupported_param:Tuple(listener) (1 methods) ---
+  SoundService::SetListener
+
+--- unsupported_param:Tuple(message) (1 methods) ---
+  Actor::SendMessage
+
+--- unsupported_param:Tuple(vibrationValues) (1 methods) ---
+  HapticService::SetMotor
+
+--- unsupported_param:User(recipientId) (1 methods) ---
+  SocialService::CanSendGameInviteAsync
+
+--- unsupported_param:User(userId) (15 methods) ---
+  AnimationClipProvider::GetAnimationsAsync
+  BadgeService::AwardBadgeAsync
+  BadgeService::UserHasBadgeAsync
+  GuiService::InspectPlayerFromUserId
+  KeyframeSequenceProvider::GetAnimationsAsync
+  MarketplaceService::UserOwnsGamePassAsync
+  Player::IsFriendsWithAsync
+  Players::CreateHumanoidModelFromUserIdAsync
+  Players::GetBanHistoryAsync
+  Players::GetFriendsAsync
+  Players::GetHumanoidDescriptionFromUserIdAsync
+  Players::GetNameFromUserIdAsync
+  Players::GetPlayerByUserId
+  TextChatService::CanUserChatAsync
+  VoiceChatService::IsVoiceEnabledForUserIdAsync
+
+--- unsupported_param:User(userIdFrom) (1 methods) ---
+  TextChatService::CanUsersChatAsync
+
+--- unsupported_param:Variant(args) (1 methods) ---
+  Translator::FormatByKey
+
+--- unsupported_param:Variant(entries) (1 methods) ---
+  LocalizationTable::SetEntries
+
+--- unsupported_param:Variant(input) (1 methods) ---
+  HttpService::JSONEncode
+
+--- unsupported_param:Variant(message) (1 methods) ---
+  MessagingService::PublishAsync
+
+--- unsupported_param:Variant(minValue) (1 methods) ---
+  OrderedDataStore::GetSortedAsync
+
+--- unsupported_param:Variant(motors) (1 methods) ---
+  Animator::ApplyJointVelocities
+
+--- unsupported_param:Variant(nameOrInstance) (1 methods) ---
+  SoundService::SetInputDevice
+
+--- unsupported_param:Variant(settings) (1 methods) ---
+  Chat::SetBubbleChatSettings
+
+--- unsupported_param:Variant(state) (1 methods) ---
+  InputAction::Fire
+
+--- unsupported_param:Variant(teleportData) (2 methods) ---
+  TeleportOptions::SetTeleportData
+  TeleportService::Teleport
+
+--- unsupported_param:Variant(transitionParams) (2 methods) ---
+  StyleRule::SetDefaultPropertyTransition
+  StyleRule::SetPropertyTransition
+
+--- unsupported_param:Variant(url) (1 methods) ---
+  HttpService::GetAsync
+
+--- unsupported_param:Variant(value) (16 methods) ---
+  AnimationTrack::SetParameter
+  ConfigService::SetTestingValue
+  Instance::SetAttribute
+  MemoryStoreHashMap::SetAsync
+  MemoryStoreQueue::AddAsync
+  MemoryStoreSortedMap::SetAsync
+  PlayerDataRecord::SetValue
+  PlayerDataRecordConfig::SetDefaultValue
+  ScriptDebugger::SetGlobal
+  ScriptDebugger::SetLocal
+  ScriptDebugger::SetUpvalue
+  StarterGui::SetCore
+  StudioTestService::EndTest
+  StyleQuery::SetCondition
+  StyleRule::SetProperty
+  TeleportService::SetTeleportSetting
+
+--- unsupported_param:buffer(input) (1 methods) ---
+  EncodingService::GetDecompressedBufferSize
+
+--- unsupported_return:AdReward (1 methods) ---
+  AdService::CreateAdRewardFromDevProductId
+
+--- unsupported_return:Array (158 methods) ---
+  AnimationTrack::GetTargetNames
+  Animator::GetPlayingAnimationTracks
+  AssetService::GetAssetIdsForPackageAsync
+  AssetService::GetAudioMetadataAsync
+  AudioAnalyzer::GetInputPins
+  AudioAnalyzer::GetOutputPins
+  AudioAnalyzer::GetSpectrum
+  AudioChannelMixer::GetInputPins
+  AudioChannelMixer::GetOutputPins
+  AudioChannelSplitter::GetInputPins
+  AudioChannelSplitter::GetOutputPins
+  AudioChorus::GetInputPins
+  AudioChorus::GetOutputPins
+  AudioCompressor::GetInputPins
+  AudioCompressor::GetOutputPins
+  AudioDeviceInput::GetInputPins
+  AudioDeviceInput::GetOutputPins
+  AudioDeviceInput::GetUserIdAccessList
+  AudioDeviceOutput::GetInputPins
+  AudioDeviceOutput::GetOutputPins
+  AudioDistortion::GetInputPins
+  AudioDistortion::GetOutputPins
+  AudioEcho::GetInputPins
+  AudioEcho::GetOutputPins
+  AudioEmitter::GetInputPins
+  AudioEmitter::GetOutputPins
+  AudioEqualizer::GetInputPins
+  AudioEqualizer::GetOutputPins
+  AudioFader::GetInputPins
+  AudioFader::GetOutputPins
+  AudioFilter::GetInputPins
+  AudioFilter::GetOutputPins
+  AudioFlanger::GetInputPins
+  AudioFlanger::GetOutputPins
+  AudioGate::GetInputPins
+  AudioGate::GetOutputPins
+  AudioLimiter::GetInputPins
+  AudioLimiter::GetOutputPins
+  AudioListener::GetInputPins
+  AudioListener::GetOutputPins
+  AudioPitchShifter::GetInputPins
+  AudioPitchShifter::GetOutputPins
+  AudioPlayer::GetInputPins
+  AudioPlayer::GetOutputPins
+  AudioPlayer::GetWaveformAsync
+  AudioRecorder::GetInputPins
+  AudioRecorder::GetOutputPins
+  AudioReverb::GetInputPins
+  AudioReverb::GetOutputPins
+  AudioTextToSpeech::GetWaveformAsync
+  AudioTremolo::GetInputPins
+  AudioTremolo::GetOutputPins
+  AvatarCreationService::GetBatchTokenDetailsAsync
+  AvatarEditorService::GetBatchItemDetailsAsync
+  AvatarEditorService::GetHeadShapesAsync
+  AvatarEditorService::GetRecommendedAssetsAsync
+  AvatarEditorService::GetRecommendedBundlesAsync
+  BadgeService::CheckUserBadgesAsync
+  CollectionService::GetAllTags
+  CollectionService::GetTags
+  ContentProvider::ListEncryptedAssets
+  DataStoreKeyInfo::GetUserIds
+  EditableMesh::FindVerticesWithinSphere
+  EditableMesh::GetAdjacentFaces
+  EditableMesh::GetAdjacentVertices
+  EditableMesh::GetBones
+  EditableMesh::GetColors
+  EditableMesh::GetFaceColors
+  EditableMesh::GetFaceNormals
+  EditableMesh::GetFaceUVs
+  EditableMesh::GetFaceVertices
+  EditableMesh::GetFaces
+  EditableMesh::GetFacesWithColor
+  EditableMesh::GetFacesWithNormal
+  EditableMesh::GetFacesWithUV
+  EditableMesh::GetFacsCorrectivePoses
+  EditableMesh::GetFacsPoses
+  EditableMesh::GetNormals
+  EditableMesh::GetUVs
+  EditableMesh::GetVertexBoneWeights
+  EditableMesh::GetVertexBones
+  EditableMesh::GetVertexColors
+  EditableMesh::GetVertexFaces
+  EditableMesh::GetVertexNormals
+  EditableMesh::GetVertexUVs
+  EditableMesh::GetVertices
+  EditableMesh::GetVerticesWithColor
+  EditableMesh::GetVerticesWithNormal
+  EditableMesh::GetVerticesWithUV
+  EditableMesh::RemoveUnused
+  EulerRotationCurve::GetAnglesAtTime
+  FloatCurve::GetKeyIndicesAtTime
+  FloatCurve::GetKeys
+  FloatCurve::InsertKey
+  GeometryService::CalculateConstraintsToPreserve
+  GeometryService::FragmentAsync
+  GeometryService::GenerateFragmentSites
+  GeometryService::IntersectAsync
+  GeometryService::SubtractAsync
+  GeometryService::UnionAsync
+  GroupService::GetGroupsAsync
+  Humanoid::GetAccessories
+  HumanoidDescription::GetAccessories
+  HumanoidDescription::GetEquippedEmotes
+  HumanoidRigDescription::GetJointNames
+  HumanoidRigDescription::GetR15JointNames
+  HumanoidRigDescription::GetR6JointNames
+  InsertService::GetFreeDecalsAsync
+  InsertService::GetFreeModelsAsync
+  Instance::GetTags
+  LocalizationService::GetTableEntries
+  LocalizationTable::GetEntries
+  LogService::GetLogHistory
+  MarkerCurve::GetMarkers
+  MarkerCurve::InsertMarkerAtTime
+  MarketplaceService::GetUserSubscriptionPaymentHistoryAsync
+  MarketplaceService::GetUsersPriceLevelsAsync
+  MarketplaceService::RankProductsAsync
+  MarketplaceService::RecommendTopProductsAsync
+  MemoryStoreSortedMap::GetRangeAsync
+  Pages::GetCurrentPage
+  Path::GetWaypoints
+  Path2D::GetControlPoints
+  PhysicsService::GetRegisteredCollisionGroups
+  Player::GetFriendsOnlineAsync
+  Player::GetFriendsWhoPlayedAsync
+  RealtimeMedia::GetInputPins
+  RealtimeMedia::GetOutputPins
+  ReflectionService::GetClasses
+  ReflectionService::GetEventsOfClass
+  ReflectionService::GetMethodsOfClass
+  ReflectionService::GetPropertiesOfClass
+  RotationCurve::GetKeyIndicesAtTime
+  RotationCurve::GetKeys
+  RotationCurve::InsertKey
+  ScriptContext::GetCoverageStats
+  ScriptDebugger::GetStack
+  SocialService::GetPartyAsync
+  SocialService::GetUpcomingExperienceEventsAsync
+  Stats::GetMemoryCategoryNames
+  Stats::GetMemoryUsageMbAllCategories
+  TextChatService::CanUsersDirectChatAsync
+  TextChatService::GetChatGroupsAsync
+  UserInputService::GetConnectedGamepads
+  UserInputService::GetNavigationGamepads
+  UserInputService::GetSupportedGamepadKeyCodes
+  UserService::GetUserInfosByUserIdsAsync
+  ValueCurve::GetKeyIndicesAtTime
+  ValueCurve::GetKeys
+  ValueCurve::InsertKey
+  ValueCurve::InsertKeyValue
+  Vector3Curve::GetValueAtTime
+  VideoDisplay::GetInputPins
+  VideoDisplay::GetOutputPins
+  VideoPlayer::GetInputPins
+  VideoPlayer::GetOutputPins
+  VideoSampler::GetSamplesAtTimesAsync
+  VoiceChatService::GetChatGroupsAsync
+
+--- unsupported_return:ClipEvaluator (1 methods) ---
+  AnimationClipProvider::GetClipEvaluatorAsync
+
+--- unsupported_return:CoordinateFrame? (1 methods) ---
+  RotationCurve::GetValueAtTime
+
+--- unsupported_return:Dictionary (54 methods) ---
+  AdService::GetAdAvailabilityNowAsync
+  AdService::GetCampaignEligibilityAsync
+  AnalyticsService::GetPlayerSegmentsAsync
+  AnimationTrack::GetParameterDefaults
+  AssetService::GetBundleDetailsAsync
+  AudioEmitter::GetAngleAttenuation
+  AudioEmitter::GetDistanceAttenuation
+  AudioListener::GetAngleAttenuation
+  AudioListener::GetDistanceAttenuation
+  AvatarCreationService::GetValidationRules
+  AvatarEditorService::GetAvatarRulesAsync
+  AvatarEditorService::GetItemDetailsAsync
+  AvatarEditorService::GetOutfitDetailsAsync
+  BadgeService::GetBadgeInfoAsync
+  CaptureService::GetDeviceInfo
+  CommerceService::GetCommerceProductInfoAsync
+  ContextActionService::GetAllBoundActionInfo
+  ContextActionService::GetBoundActionInfo
+  DataStoreIncrementOptions::GetMetadata
+  DataStoreKeyInfo::GetMetadata
+  DataStoreSetOptions::GetMetadata
+  GenerationService::GetVideoGenTriggersAsync
+  HttpService::RequestAsync
+  HumanoidDescription::GetEmotes
+  Instance::GetAttributes
+  LanguageService::GetCapabilitiesUsedInPackageAsync
+  MLSession::ForwardAsync
+  MarkerCurve::GetMarkerAtIndex
+  MarketplaceService::GetProductInfoAsync
+  MarketplaceService::GetRobloxSubscriptionDetailsAsync
+  MarketplaceService::GetSubscriptionProductInfoAsync
+  MarketplaceService::GetUserSubscriptionDetailsAsync
+  MarketplaceService::GetUserSubscriptionStatusAsync
+  Player::GetJoinData
+  Players::GetCharacterAppearanceInfoAsync
+  PolicyService::GetPolicyInfoForPlayerAsync
+  RecommendationService::GetRecommendationItemAsync
+  RecommendationService::RegisterItemAsync
+  SceneAnalysisService::GetAnimationMemoryAsync
+  SceneAnalysisService::GetAudioMemoryAsync
+  SceneAnalysisService::GetInstanceCompositionAsync
+  SceneAnalysisService::GetScriptMemoryAsync
+  SceneAnalysisService::GetTriangleCompositionAsync
+  SceneAnalysisService::GetUnparentedInstancesAsync
+  StyleQuery::GetConditions
+  StyleRule::GetProperties
+  StyleRule::GetPropertyTransitions
+  Terrain::ReadVoxelChannels
+  TerrainWriteOperation::GetBlock
+  TestService::ScopeTime
+  TestService::getTestSessionProviderStats
+  TextFilterTranslatedResult::GetTranslations
+  TextGenerator::GenerateTextAsync
+  TextService::GetFamilyInfoAsync
+
+--- unsupported_return:Dictionary? (2 methods) ---
+  ReflectionService::GetClass
+  SocialService::GetExperienceEventAsync
+
+--- unsupported_return:FloatCurveKey (1 methods) ---
+  FloatCurve::GetKeyAtIndex
+
+--- unsupported_return:Instances (66 methods) ---
+  Attachment::GetConstraints
+  AudioAnalyzer::GetConnectedWires
+  AudioChannelMixer::GetConnectedWires
+  AudioChannelSplitter::GetConnectedWires
+  AudioChorus::GetConnectedWires
+  AudioCompressor::GetConnectedWires
+  AudioDeviceInput::GetConnectedWires
+  AudioDeviceOutput::GetConnectedWires
+  AudioDistortion::GetConnectedWires
+  AudioEcho::GetConnectedWires
+  AudioEmitter::GetConnectedWires
+  AudioEmitter::GetInteractingListeners
+  AudioEqualizer::GetConnectedWires
+  AudioFader::GetConnectedWires
+  AudioFilter::GetConnectedWires
+  AudioFlanger::GetConnectedWires
+  AudioGate::GetConnectedWires
+  AudioLimiter::GetConnectedWires
+  AudioListener::GetConnectedWires
+  AudioListener::GetInteractingEmitters
+  AudioPitchShifter::GetConnectedWires
+  AudioPlayer::GetConnectedWires
+  AudioRecorder::GetConnectedWires
+  AudioRecorder::GetUnrecordableInstancesAsync
+  AudioReverb::GetConnectedWires
+  AudioSpeechToText::GetConnectedWires
+  AudioTextToSpeech::GetConnectedWires
+  AudioTremolo::GetConnectedWires
+  BasePart::GetConnectedParts
+  BasePart::GetJoints
+  BasePart::GetNoCollisionConstraints
+  BasePart::GetTouchingParts
+  BasePlayerGui::GetGuiObjectsAtPosition
+  Camera::GetPartsObscuringTarget
+  CollectionService::GetTagged
+  CompositeValueCurve::GetComponentCurves
+  CustomEvent::GetAttachedReceivers
+  DebuggerManager::GetDebuggers
+  Dialog::GetCurrentPlayers
+  Instance::GetChildren
+  Instance::GetDescendants
+  Instance::QueryDescendants
+  Keyframe::GetMarkers
+  Keyframe::GetPoses
+  KeyframeSequence::GetKeyframes
+  LocalizationService::GetCorescriptLocalizations
+  Model::GetPersistentPlayers
+  Players::GetPlayers
+  Pose::GetSubPoses
+  RealtimeMedia::GetConnectedWires
+  ScriptDebugger::GetBreakpoints
+  ScriptDebugger::GetWatches
+  SerializationService::DeserializeInstancesAsync
+  SocialService::GetPlayersByPartyId
+  StyleBase::GetStyleRules
+  StyleSheet::GetDerives
+  Team::GetPlayers
+  Teams::GetTeams
+  UserInputService::GetGamepadState
+  UserInputService::GetKeysPressed
+  UserInputService::GetMouseButtonsPressed
+  VideoDisplay::GetConnectedWires
+  VideoPlayer::GetConnectedWires
+  WorldRoot::GetPartBoundsInBox
+  WorldRoot::GetPartBoundsInRadius
+  WorldRoot::GetPartsInPart
+
+--- unsupported_return:Map (4 methods) ---
+  EditableMesh::MergeVertices
+  ScriptDebugger::GetGlobals
+  ScriptDebugger::GetLocals
+  ScriptDebugger::GetUpvalues
+
+--- unsupported_return:Path2DControlPoint (1 methods) ---
+  Path2D::GetControlPoint
+
+--- unsupported_return:RBXScriptConnection (8 methods) ---
+  Actor::BindToMessage
+  Actor::BindToMessageParallel
+  DragDetector::AddConstraintFunction
+  MarketplaceService::BindReceiptHandler
+  MessagingService::SubscribeAsync
+  ModerationService::BindReviewableContentEventProcessor
+  RunService::BindToSimulation
+  UIDragDetector::AddConstraintFunction
+
+--- unsupported_return:RBXScriptSignal (14 methods) ---
+  AnimationTrack::GetMarkerReachedSignal
+  CollectionService::GetInstanceAddedSignal
+  CollectionService::GetInstanceRemovedSignal
+  ConfigSnapshot::GetValueChangedSignal
+  ContentProvider::GetAssetFetchStatusChangedSignal
+  Instance::GetAttributeChangedSignal
+  Instance::GetStyledPropertyChangedSignal
+  Object::GetPropertyChangedSignal
+  PlayerDataRecord::GetValueChangedSignal
+  RemoteCommandService::GetReceivedUpdateSignal
+  RemoteCommandService::GetStoppingSignal
+  TerrainIterateOperation::CommitBlock
+  TerrainModifyOperation::CommitBlock
+  TerrainWriteOperation::CommitBlock
+
+--- unsupported_return:RaycastResult? (4 methods) ---
+  WorldRoot::Blockcast
+  WorldRoot::Raycast
+  WorldRoot::Shapecast
+  WorldRoot::Spherecast
+
+--- unsupported_return:RotationCurveKey (1 methods) ---
+  RotationCurve::GetKeyAtIndex
+
+--- unsupported_return:Secret (1 methods) ---
+  HttpService::GetSecret
+
+--- unsupported_return:SharedTable (1 methods) ---
+  SharedTableRegistry::GetSharedTable
+
+--- unsupported_return:Tuple (57 methods) ---
+  AssetService::CreateAssetAsync
+  AssetService::CreateAssetVersionAsync
+  AssetService::CreateDataModelContentAsync
+  AssetService::PromptCreateAssetAsync
+  AssetService::PromptImportAnimationClipFromVideoAsync
+  AvatarCreationService::PromptCreateAvatarAssetAsync
+  AvatarCreationService::PromptCreateAvatarAsync
+  AvatarCreationService::RequestAvatarGenerationSessionAsync
+  AvatarCreationService::ValidateUGCAccessoryAsync
+  AvatarCreationService::ValidateUGCBodyPartAsync
+  AvatarCreationService::ValidateUGCFullBodyAsync
+  BasePart::CanSetNetworkOwnership
+  BindableFunction::Invoke
+  Camera::WorldToScreenPoint
+  Camera::WorldToViewportPoint
+  CaptureService::CheckUploadCaptureStatusAsync
+  CaptureService::ReadCapturesFromGalleryAsync
+  CaptureService::StartUploadCaptureAsync
+  CaptureService::UploadCaptureAsync
+  Chat::InvokeChatCallback
+  DataStore::GetVersionAsync
+  DataStore::GetVersionAtTimeAsync
+  EditableMesh::FindClosestPointOnSurface
+  EditableMesh::GetFacsCorrectivePose
+  EditableMesh::GetFacsPose
+  EditableMesh::RaycastLocal
+  FluidForceSensor::EvaluateAsync
+  GenerationService::ConnectAsync
+  GenerationService::GenerateMeshAsync
+  GenerationService::GenerateModelAsync
+  GenerationService::GetVideoGenSessionAsync
+  GlobalDataStore::GetAsync
+  GlobalDataStore::RemoveAsync
+  GlobalDataStore::UpdateAsync
+  GuiService::GetGuiInset
+  HapticService::GetMotor
+  LiveSyncService::GetSyncState
+  MatchmakingService::GetServerAttribute
+  MatchmakingService::InitializeServerAttributesForStudio
+  MatchmakingService::SetServerAttribute
+  MemoryStoreQueue::ReadAsync
+  MemoryStoreSortedMap::GetAsync
+  MemoryStoreSortedMap::UpdateAsync
+  Model::GetBoundingBox
+  Players::GetUserThumbnailAsync
+  RemoteFunction::InvokeClient
+  RemoteFunction::InvokeServer
+  SocialService::PromptLinkSharingAsync
+  SoundService::GetListener
+  TeleportService::GetPlayerPlaceInstanceAsync
+  TeleportService::ReserveServerAsync
+  Terrain::GetMaterialSlot
+  Terrain::ReadVoxels
+  TestService::CaptureScreenshotAsync
+  TestService::RequestValidationAsync
+  TextChannel::AddUserAsync
+  UserInputService::GetDeviceRotation
+
+--- unsupported_return:User (1 methods) ---
+  UserService::GetUserFromGlobalUserIdAsync
+
+--- unsupported_return:ValueCurveKey (1 methods) ---
+  ValueCurve::GetKeyAtIndex
+
+--- unsupported_return:Variant (24 methods) ---
+  AnimationTrack::GetParameter
+  CompositeValueCurve::GetValueAtTime
+  ConfigSnapshot::GetValue
+  GlobalDataStore::IncrementAsync
+  GlobalDataStore::SetAsync
+  GroupService::GetGroupInfoAsync
+  GroupService::GetRolesInGroupAsync
+  HttpService::JSONDecode
+  InputAction::GetState
+  Instance::GetAttribute
+  Instance::GetStyled
+  MemoryStoreHashMap::GetAsync
+  MemoryStoreHashMap::UpdateAsync
+  PlayerDataRecord::GetValue
+  PlayerDataRecordConfig::GetDefaultValue
+  ScriptDebugger::GetWatchValue
+  StarterGui::GetCore
+  StudioTestService::GetTestArgs
+  StyleQuery::GetCondition
+  StyleRule::GetDefaultPropertyTransition
+  StyleRule::GetProperty
+  TeleportOptions::GetTeleportData
+  TeleportService::GetLocalPlayerTeleportData
+  TeleportService::GetTeleportSetting
+
+--- unsupported_return:Variant? (1 methods) ---
+  ValueCurve::GetValueAtTime
+
+--- unsupported_return:buffer (7 methods) ---
+  EditableImage::ReadPixelsBuffer
+  EncodingService::Base64Decode
+  EncodingService::Base64Encode
+  EncodingService::CompressBuffer
+  EncodingService::ComputeBufferHash
+  EncodingService::DecompressBuffer
+  SerializationService::SerializeInstancesAsync

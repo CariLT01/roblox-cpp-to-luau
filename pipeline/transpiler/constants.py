@@ -68,4 +68,4 @@ FP_REG_ABI_MAP = {
 CHUNK_SIZE = 1000
 
 # Instructions that change control flow (can't merge past them)
-TERMINATOR_OPS = {"beq", "bne", "blt", "bge", "bltu", "bgeu", "jal", "jalr", "ecall", "ebreak"}
+TERMINATOR_OPS = {"beq", "bne", "blt", "bge", "bltu", "bgeu", "jal", "jalr", "ecall", "ebreak", "ret"}

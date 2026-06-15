@@ -9,9 +9,13 @@ from .handlers.memory import _handle_load, _handle_store
 from .handlers.control import _handle_branch, _handle_jal, _handle_jalr, _handle_lui, _handle_auipc
 
 
-def generate_handler_bodies(parsed_instructions, rodata_addr_table, rodata_table, func_map):
+def generate_handler_bodies(parsed_instructions, rodata_addr_table, rodata_table,
+                            func_map, validate=False):
     """Generate instruction handler bodies with compile-time state tracking.
-    
+
+    If *validate* is True, memory load/store and heap operations emit extra
+    runtime checks (null-pointer, double-free, etc.).
+
     Returns list of {'addr': int, 'is_term': bool, 'body_lines': [str]}.
     """
     # Compile-time state trackers
@@ -76,6 +80,7 @@ def generate_handler_bodies(parsed_instructions, rodata_addr_table, rodata_table
                 tracked_a3_literal, tracked_a3_rodata_str,
                 tracked_a4_rodata_str, tracked_a5_literal,
                 tracked_a5_rodata_str, tracked_a2_literal,
+                validate=validate
             )
         # --- R-Type Math (RV32I + RV32M) ---
         elif mnemonic in ["add", "sub", "xor", "or", "and", "sll", "srl", "sra",
@@ -96,10 +101,10 @@ def generate_handler_bodies(parsed_instructions, rodata_addr_table, rodata_table
             _handle_itype(handler_body, mnemonic, args, addr_int)
         # --- Load Operations ---
         elif mnemonic in ["lb", "lw", "lbu", "flw"]:
-            _handle_load(handler_body, mnemonic, args, addr_int)
+            _handle_load(handler_body, mnemonic, args, addr_int, validate)
         # --- Store Operations ---
         elif mnemonic in ["sb", "sw", "fsw"]:
-            _handle_store(handler_body, mnemonic, args, addr_int)
+            _handle_store(handler_body, mnemonic, args, addr_int, validate)
         # --- Branching & Jumps ---
         elif mnemonic in ["beq", "bne", "blt", "bge", "bltu", "bgeu"]:
             _handle_branch(handler_body, mnemonic, args, addr_int)
@@ -113,6 +118,15 @@ def generate_handler_bodies(parsed_instructions, rodata_addr_table, rodata_table
             _handle_auipc(handler_body, args, addr_int)
         elif mnemonic == "ebreak":
             handler_body.append(f"        print('System Halt: {mnemonic}')")
+            handler_body.append("        return nil")
+        # --- ret pseudo-instruction (jalr zero, 0(ra)) ---
+        elif mnemonic == "ret":
+            # ret is jalr zero, 0(ra) — equivalent to return _next_pc with ra as base
+            handler_body.append("        local _next_pc = bit32.band(reg[2] + 0, 0xFFFFFFFF)")
+            handler_body.append("        return _next_pc")
+        # --- Catch-all for unrecognized instructions ---
+        else:
+            handler_body.append(f"        print('System Halt: Unrecognized instruction {mnemonic} at {address}')")
             handler_body.append("        return nil")
 
         # Close the handler function and collect body lines for merging

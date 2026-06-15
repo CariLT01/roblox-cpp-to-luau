@@ -128,25 +128,75 @@ def _handle_itype(handler_body, mnemonic, args, addr_int):
     if "%lo" in clean_imm or "%hi" in clean_imm:
         clean_imm = "0"
 
+    # ── Parse the immediate once (used by several optimizations below) ──
+    imm_int = None
+    try:
+        imm_int = int(clean_imm, 0)
+    except ValueError:
+        pass
+
     if mnemonic == "addi":
-        handler_body.append(f"        {rd} = bit32.band({rs1} + {clean_imm}, 0xFFFFFFFF)")
+        # Optimize: addi rd, rs1, 0  →  plain register move
+        if imm_int == 0 and args[1] not in ("x0", "zero"):
+            handler_body.append(f"        {rd} = {rs1}")
+        # Optimize: addi rd, x0, imm  →  precomputed constant (li pseudo)
+        elif args[1] in ("x0", "zero") and imm_int is not None:
+            handler_body.append(f"        {rd} = {imm_int & 0xFFFFFFFF}")
+        else:
+            handler_body.append(f"        {rd} = bit32.band({rs1} + {clean_imm}, 0xFFFFFFFF)")
+
     elif mnemonic == "xori":
-        handler_body.append(f"        {rd} = bit32.bxor({rs1}, {clean_imm})")
+        # Optimize: xori rd, rs1, 0  →  register copy
+        if imm_int == 0:
+            handler_body.append(f"        {rd} = {rs1}")
+        else:
+            handler_body.append(f"        {rd} = bit32.bxor({rs1}, {clean_imm})")
+
     elif mnemonic == "ori":
-        handler_body.append(f"        {rd} = bit32.bor({rs1}, {clean_imm})")
+        # Optimize: ori rd, rs1, 0  →  register copy
+        if imm_int == 0:
+            handler_body.append(f"        {rd} = {rs1}")
+        else:
+            handler_body.append(f"        {rd} = bit32.bor({rs1}, {clean_imm})")
+
     elif mnemonic == "andi":
-        handler_body.append(f"        {rd} = bit32.band({rs1}, {clean_imm})")
+        # Optimize: andi rd, rs1, -1  →  register copy (X & 0xFFFFFFFF = X)
+        if imm_int in (-1, 0xFFFFFFFF):
+            handler_body.append(f"        {rd} = {rs1}")
+        else:
+            handler_body.append(f"        {rd} = bit32.band({rs1}, {clean_imm})")
+
     elif mnemonic == "slli":
-        handler_body.append(f"        {rd} = bit32.lshift({rs1}, bit32.band({clean_imm}, 31))")
+        # Precompute shift amount  (imm & 31)
+        if imm_int is not None:
+            handler_body.append(f"        {rd} = bit32.lshift({rs1}, {imm_int & 31})")
+        else:
+            handler_body.append(f"        {rd} = bit32.lshift({rs1}, bit32.band({clean_imm}, 31))")
+
     elif mnemonic == "srli":
-        handler_body.append(f"        {rd} = bit32.rshift({rs1}, bit32.band({clean_imm}, 31))")
+        if imm_int is not None:
+            handler_body.append(f"        {rd} = bit32.rshift({rs1}, {imm_int & 31})")
+        else:
+            handler_body.append(f"        {rd} = bit32.rshift({rs1}, bit32.band({clean_imm}, 31))")
+
     elif mnemonic == "srai":
-        handler_body.append(f"        {rd} = bit32.arshift({rs1}, bit32.band({clean_imm}, 31))")
+        if imm_int is not None:
+            handler_body.append(f"        {rd} = bit32.arshift({rs1}, {imm_int & 31})")
+        else:
+            handler_body.append(f"        {rd} = bit32.arshift({rs1}, bit32.band({clean_imm}, 31))")
+
     elif mnemonic == "slti":
-        handler_body.append(f"        local _s1 = if {rs1} > 0x7FFFFFFF then {rs1} - 0x100000000 else {rs1}")
-        handler_body.append(f"        local _imm_val = {clean_imm}")
-        handler_body.append("        local _s2 = if _imm_val > 0x7FFFFFFF then _imm_val - 0x100000000 else _imm_val")
-        handler_body.append(f"        {rd} = if _s1 < _s2 then 1 else 0")
+        # Precompute signed version of the immediate at transpile time
+        if imm_int is not None:
+            s2 = imm_int - 0x100000000 if imm_int > 0x7FFFFFFF else imm_int
+            handler_body.append(f"        local _s1 = if {rs1} > 0x7FFFFFFF then {rs1} - 0x100000000 else {rs1}")
+            handler_body.append(f"        {rd} = if _s1 < {s2} then 1 else 0")
+        else:
+            handler_body.append(f"        local _s1 = if {rs1} > 0x7FFFFFFF then {rs1} - 0x100000000 else {rs1}")
+            handler_body.append(f"        local _imm_val = {clean_imm}")
+            handler_body.append("        local _s2 = if _imm_val > 0x7FFFFFFF then _imm_val - 0x100000000 else _imm_val")
+            handler_body.append(f"        {rd} = if _s1 < _s2 then 1 else 0")
+
     elif mnemonic == "sltiu":
         handler_body.append(f"        {rd} = if {rs1} < {clean_imm} then 1 else 0")
 

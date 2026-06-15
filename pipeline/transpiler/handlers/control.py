@@ -45,7 +45,7 @@ def _handle_jal(handler_body, args, addr_int):
 
 def _handle_jalr(handler_body, args, addr_int):
     rd = clean_reg(args[0])
-    mem_match = re.match(r"(-?\d+)\((x\d+)\)", args[1])
+    mem_match = re.match(r"(-?\d+)\((\w+)\)", args[1])
     if mem_match:
         offset, rs1 = mem_match.group(1), clean_reg(mem_match.group(2))
         handler_body.append(f"        local _next_pc = bit32.band({rs1} + {offset}, 0xFFFFFFFF)")
@@ -53,6 +53,10 @@ def _handle_jalr(handler_body, args, addr_int):
         if rd != "reg[1]":
             handler_body.append(f"        {rd} = {(addr_int + 4) & 0xFFFFFFFF}")
         handler_body.append("        return _next_pc")
+    else:
+        # Malformed jalr operand — halt with diagnostic
+        handler_body.append(f"        print('System Halt: jalr with unrecognized operand format: ' .. '{args[1]}')")
+        handler_body.append("        return nil")
 
 
 def _handle_lui(handler_body, args, addr_int):

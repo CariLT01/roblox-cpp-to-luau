@@ -8,15 +8,18 @@ from .metadata import (
     find_main_address, parse_function_labels,
     build_rodata_lua_entries, build_rodata_init_lines,
 )
-from .asm_parser import parse_instructions, collect_branch_targets
+from .asm_parser import parse_instructions, collect_branch_targets, collect_address_taken
 from .generator import generate_handler_bodies
-from .blocks import merge_into_blocks, generate_handler_strings, split_into_chunks
+from .blocks import merge_into_blocks, generate_handler_strings, split_into_chunks, tail_merge_blocks
 from .builders import build_shared_luau, build_run_luau
 from .obfuscator import apply_mangling
 
 
-def parse_asm_to_modules(asm_text):
+def parse_asm_to_modules(asm_text, validate=False):
     """Parse RISC-V assembly and generate split ModuleScript outputs.
+
+    If *validate* is True, extra runtime checks are emitted for heap/stack
+    memory accesses (null-pointer detection, double-free, etc.).
 
     Returns a dict:
       {
@@ -37,20 +40,25 @@ def parse_asm_to_modules(asm_text):
     # --- Assembly parsing ---
     parsed_instructions = parse_instructions(asm_text)
     branch_targets = collect_branch_targets(parsed_instructions)
+    address_taken = collect_address_taken(parsed_instructions)
+    address_taken.add(main_address_int)  # entry point must not be deleted
 
     # --- Instruction → Lua generation ---
     all_inst_bodies = generate_handler_bodies(
-        parsed_instructions, rodata_addr_table, rodata_table, func_map
+        parsed_instructions, rodata_addr_table, rodata_table, func_map,
+        validate=validate
     )
 
-    # --- Block merging and chunking ---
+    # --- Block merging and tail-merging optimization ---
     blocks = merge_into_blocks(all_inst_bodies, branch_targets)
+    blocks = tail_merge_blocks(blocks, address_taken)
     all_handler_strings = generate_handler_strings(blocks)
     chunks = split_into_chunks(all_handler_strings)
 
     # --- Build output modules ---
     shared_content = build_shared_luau(
-        enums_sparse_lines, rodat_lua_entries, rodata_init_lines, main_address_str
+        enums_sparse_lines, rodat_lua_entries, rodata_init_lines, main_address_str,
+        validate=validate
     )
     run_content = build_run_luau(main_address_int, main_address_str, len(chunks))
 
@@ -91,7 +99,15 @@ def _write_output(shared_content, chunks, run_content):
 
 def main():
     """CLI entry point: read input.asm, transpile, write output."""
-    input_file = "output.asm"
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--validate", action="store_true",
+                        help="Emit runtime validation checks for heap/stack memory access")
+    parser.add_argument("input", nargs="?", default="output.asm",
+                        help="Input assembly file (default: output.asm)")
+    args = parser.parse_args()
+
+    input_file = args.input
     if not os.path.exists(input_file):
         print(f"Error: {input_file} not found. Run compile.bat first to generate it.")
         return
@@ -99,7 +115,10 @@ def main():
     with open(input_file, "r", encoding="utf-8") as f:
         input_asm = f.read()
 
-    modules = parse_asm_to_modules(input_asm)
+    modules = parse_asm_to_modules(input_asm, validate=args.validate)
+
+    if args.validate:
+        print("Validation mode enabled — extra runtime memory checks emitted.")
 
     chunk_count = len(modules['chunks'])
     shared_size = len(modules['shared'])

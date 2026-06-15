@@ -6,6 +6,7 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("--runpath", type=str)
 parser.add_argument("--dist", type=str)
+parser.add_argument("--makedirs", type=bool)
 
 args = parser.parse_args()
 
@@ -16,9 +17,15 @@ dist_path = args.dist or "dist"
 dist_path_abs = os.path.abspath(dist_path)
 
 if os.path.exists(run_path_abs) is False:
-    raise SystemError(f"Run path not found: {run_path_abs}")
+    if args.makedirs:
+        os.makedirs(run_path_abs, exist_ok=True)
+    else:
+        raise SystemError(f"Run path not found: {run_path_abs}")
 if os.path.exists(dist_path_abs) is False:
-    raise SystemError(f"Dist path not found: {dist_path_abs}")
+    if args.makedirs:
+        os.makedirs(dist_path_abs, exist_ok=True)
+    else:
+        raise SystemError(f"Dist path not found: {dist_path_abs}")
 
 
 # Delete files

@@ -7,6 +7,7 @@
 #ifndef RBXL_HPP
 #define RBXL_HPP
 
+#include "lua.hpp"
 #include "math.hpp"
 #include "enums.hpp"
 
@@ -202,28 +203,6 @@ inline CFrame cframe_fromEulerAngles(float rx, float ry, float rz) {
 }
 
 namespace Rbxl {
-    // Syscall 4: Null-terminated String Pointer
-    void print(const char* str) {
-        asm volatile ("mv a0, %0; li a7, 4; ecall" : : "r"(str) : "a0", "a7");
-    }
-
-    // Syscall 5: Integer Value
-    void print(int val) {
-        asm volatile ("mv a0, %0; li a7, 5; ecall" : : "r"(val) : "a0", "a7");
-    }
-
-    // Syscall 6: Boolean Value (0 or 1)
-    void print(bool val) {
-        asm volatile ("mv a0, %0; li a7, 6; ecall" : : "r"((int)val) : "a0", "a7");
-    }
-
-    // Syscall 7: Float Pointer (Passed via RAM pointer to keep tracking unified)
-    void print(float val) {
-        volatile float v = val;
-        volatile float* ptr = &v;
-        asm volatile ("mv a0, %0; li a7, 7; ecall" : : "r"(ptr) : "a0", "a7", "memory");
-    }
-
     // Syscall 8: Create a new Part, returns an opaque handle (stored in a0 by VM)
     void* createPart() {
         void* handle = nullptr;
@@ -505,18 +484,6 @@ namespace Rbxl {
 
     // --- Task/Yielding ---
 
-    // Syscall 45: task.wait(n) — yields the VM for n seconds, returns actual time waited
-    float taskWait(float seconds) {
-        float result = 0.0f;
-        asm volatile (
-            "mv a0, %1; li a7, 45; ecall; mv %0, a0"
-            : "=r"(result)
-            : "r"(seconds)
-            : "a0", "a7"
-        );
-        return result;
-    }
-
     // Syscall 33: Get workspace — returns handle to the workspace instance
     void* getWorkspace() {
         void* handle = nullptr;
@@ -634,23 +601,48 @@ namespace Rbxl {
         );
         return handle;
     }
+
+    // Syscall 52: getGlobal(name) — returns the named Lua global as a handle
+    // The transpiler intercepts this and emits the global identifier literally (e.g. reg[11] = os)
+    void* getGlobal(const char* name) {
+        void* handle = nullptr;
+        asm volatile (
+            "mv a0, %1; li a7, 52; ecall; mv %0, a0"
+            : "=r"(handle)
+            : "r"(name)
+            : "a0", "a7"
+        );
+        return handle;
+    }
+
+    // Syscall 53: require — requires a ModuleScript instance, returns Instance handle
+    void* require(void* moduleHandle) {
+        void* handle = nullptr;
+        asm volatile (
+            "mv a0, %1; li a7, 53; ecall; mv %0, a0"
+            : "=r"(handle)
+            : "r"(moduleHandle)
+            : "a0", "a7"
+        );
+        return handle;
+    }
 }
 
-// ── Instance: base class for all Roblox instances ──
-class Instance {
+// ── LuaObj: base class for all Roblox object handles ──
+class LuaObj {
 protected:
     void* h;
 public:
-    Instance() : h(nullptr) {}
-    Instance(void* handle) : h(handle) {}
+    LuaObj() : h(nullptr) {}
+    LuaObj(void* handle) : h(handle) {}
 
     bool valid() const { return h != nullptr; }
     void* handle() const { return h; }
 
     void destroy() { if (h) { Rbxl::destroy(h); h = nullptr; } }
-    Instance clone() const { return Instance(Rbxl::clone(h)); }
-    Instance findFirstChild(const char* name) const { return Instance(Rbxl::findFirstChild(h, name)); }
-    Instance waitForChild(const char* name) const { return Instance(Rbxl::waitForChild(h, name)); }
+    LuaObj clone() const { return LuaObj(Rbxl::clone(h)); }
+    LuaObj findFirstChild(const char* name) const { return LuaObj(Rbxl::findFirstChild(h, name)); }
+    LuaObj waitForChild(const char* name) const { return LuaObj(Rbxl::waitForChild(h, name)); }
 
     // ── Generic typed property access (use on any Instance type) ──
 
@@ -687,25 +679,32 @@ public:
     void setPropertyEnum(const char* name, Rbxl::Enum e)       { Rbxl::setPropertyEnum(h, name, (int)e); }
     Rbxl::Enum getPropertyEnumTyped(const char* name)           { return (Rbxl::Enum)Rbxl::getPropertyEnum(h, name); }
 
-    void setPropertyInstance(const char* name, const Instance& target) { Rbxl::setPropertyInstance(h, name, target.handle()); }
-    void setParent(const Instance& parent) { setPropertyInstance("Parent", parent); }
+    void setPropertyInstance(const char* name, const LuaObj& target) { Rbxl::setPropertyInstance(h, name, target.handle()); }
+    void setParent(const LuaObj& parent) { setPropertyInstance("Parent", parent); }
 
     // ── Convenience methods ──
 
     void setName(const char* name)   { setPropertyString("Name", name); }
     void setAnchored(bool v)         { setPropertyBool("Anchored", v); }
 
-    static Instance getWorkspace()  { return Instance(Rbxl::getWorkspace()); }
-    static Instance getPlayers()    { return Instance(Rbxl::getPlayers()); }
-    static Instance getService(const char* name) { return Rbxl::getService(name); }
-    Instance getLocalPlayer() const { return Instance(Rbxl::getLocalPlayer(h)); }
+    static LuaObj getWorkspace()  { return LuaObj(Rbxl::getWorkspace()); }
+    static LuaObj getPlayers()    { return LuaObj(Rbxl::getPlayers()); }
+    static LuaObj getService(const char* name) { return LuaObj(Rbxl::getService(name)); }
+    static LuaObj getGlobal(const char* name)  { return LuaObj(Rbxl::getGlobal(name)); }
+    LuaObj getLocalPlayer() const { return LuaObj(Rbxl::getLocalPlayer(h)); }
 
-    static Instance New(const char* typeName) { return Instance(Rbxl::createInstance(typeName)); }
+    static LuaObj New(const char* typeName) { return LuaObj(Rbxl::createInstance(typeName)); }
 
     // Returns the RBXScriptSignal (or other method-accessible member) for the
     // given name. You can then call callMethod("Connect", ...) on the result.
-    Instance getMethod(const char* methodName) const {
-        return Instance(Rbxl::getMethod(h, methodName));
+    LuaObj getMethod(const char* methodName) const {
+        return LuaObj(Rbxl::getMethod(h, methodName));
+    }
+
+    // Requires this object as a ModuleScript and returns the result.
+    // Returns a null LuaObj if require() doesn't return a handle.
+    LuaObj require() const {
+        return LuaObj(Rbxl::require(h));
     }
 
     // ── Generic method call (uses syscall 46) ──
@@ -833,13 +832,13 @@ public:
 };
 
 // ── Part: a physical Part instance ──
-class Part : public Instance {
+ class PartWrapper : public LuaObj {
 public:
-    Part() : Instance() {}
-    Part(void* handle) : Instance(handle) {}
-    Part(const Instance& other) : Instance(other.handle()) {}
+    PartWrapper() : LuaObj() {}
+    PartWrapper(void* handle) : LuaObj(handle) {}
+    PartWrapper(const LuaObj& other) : LuaObj(other.handle()) {}
 
-    static Part create() { return Part(Rbxl::createPart()); }
+    static PartWrapper create() { return PartWrapper(Rbxl::createPart()); }
 
     void setPosition(float x, float y, float z) { setPropertyVector3("Position", Vector3(x, y, z)); }
     Vector3 getPosition() { return getPropertyVector3("Position"); }
@@ -855,6 +854,6 @@ public:
 
     void setCFrame(const CFrame& cf) { setPropertyCFrame("CFrame", cf); }
     CFrame getCFrame() { return getPropertyCFrame("CFrame"); }
-};
+}; 
 
 #endif // RBXL_HPP

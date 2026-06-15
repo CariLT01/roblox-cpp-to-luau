@@ -4,8 +4,12 @@ from .utils import escape_lua_string
 
 
 def build_shared_luau(enums_sparse_lines, rodat_lua_entries, rodata_init_lines,
-                      main_address_str):
-    """Build shared.luau content string."""
+                      main_address_str, validate=False):
+    """Build shared.luau content string.
+
+    If *validate* is True, S.validate_addr() and related helpers are emitted
+    for runtime memory-access validation.
+    """
     shared_lines = []
 
     shared_lines.extend([
@@ -191,7 +195,7 @@ def build_shared_luau(enums_sparse_lines, rodat_lua_entries, rodata_init_lines,
     shared_lines.append("    end")
     shared_lines.append("")
     shared_lines.append("    local _pc = startPC")
-    shared_lines.append("    while _pc do")
+    shared_lines.append("    while _pc and _pc ~= 0 do")
     shared_lines.append("        local _handler = S.HANDLERS[_pc]")
     shared_lines.append("        if not _handler then break end")
     shared_lines.append("        _pc = _handler()")
@@ -204,6 +208,27 @@ def build_shared_luau(enums_sparse_lines, rodat_lua_entries, rodata_init_lines,
     shared_lines.append("    end")
     shared_lines.append("end")
     shared_lines.append("")
+
+    # ── Validation helpers (only emitted when --validate is passed) ──
+    if validate:
+        shared_lines.extend([
+            "",
+            "-- Memory validation helpers (emitted by --validate)",
+            "-- Valid address ranges:",
+            "--   Heap:  0x81000000 .. S.HEAP_BRK",
+            "--   Stack: 0xA0000000 downward (main), or thread stack from HEAP_BRK",
+            "--   Rodata: anywhere pages may exist",
+            "function S.validate_addr(addr)",
+            "    if addr == 0 then",
+            "        error('[VM Validation] Null pointer dereference in memory access')",
+            "    end",
+            "    -- Null-derived pointers often land in the low page (< 0x1000)",
+            "    if addr < 0x1000 then",
+            "        error('[VM Validation] Suspect low address 0x' .. string.format('%x', addr) .. ' — likely a null-derived pointer')",
+            "    end",
+            "end",
+            "",
+        ])
 
     shared_lines.append("return S")
 
@@ -238,7 +263,7 @@ def build_run_luau(main_address_int, main_address_str, chunk_count):
         f"local PC = {main_address_int}",
         "",
         "-- Main dispatch loop",
-        "while PC do",
+        "while PC and PC ~= 0 do",
         "    local handler = S.HANDLERS[PC]",
         "    if not handler then",
         "        print('VM Halt: No handler for PC 0x' .. string.format('%x', PC))",

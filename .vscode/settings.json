@@ -1,0 +1,12 @@
+{
+    "clangd.fallbackFlags": [
+        "-I",
+        "src",
+        "-I",
+        "src/lib",
+        "-I",
+        "src/generated",
+        "-DNULL=nullptr",
+        "-std=c++17"
+    ]
+}
