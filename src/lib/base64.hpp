@@ -28,29 +28,32 @@ inline unsigned int base64_decode(const char* input, vector<uint8_t>& output) {
         encodingSvc = LuaObj::getService("EncodingService");
     }
 
-    // Call EncodingService:Base64Decode via Instance::callMethod
-    // flags: hasReturn(1) | returnIsBuffer(32) | arg1IsBuffer(512) = 545
-    void* buf = encodingSvc.callMethod("Base64Decode", Rbxl::bufferFromString(input), 545);
+    // Build an input buffer from the base64 string using Buffer struct
+    Buffer inputBuf;
+    {
+        const char* p = input;
+        while (*p && inputBuf.size < Buffer::MAX_SIZE) {
+            inputBuf.data[inputBuf.size++] = (uint8_t)*p++;
+        }
+    }
+    LuaObj inputBufHandle = LuaObj(inputBuf.toObject());
+
+    // Call EncodingService:Base64Decode — input is the buffer handle, output is a buffer
+    // flags: hasReturn(1) | returnIsObj(2) | arg1IsObj(131072) = 131075
+    void* decodedBuf = encodingSvc.callMethod("Base64Decode", inputBufHandle, 131075);
 
     Lua::print("Reading buffer into vector");
 
-    // Read decoded bytes from the buffer into our vector
-    unsigned int len = Rbxl::bufferLen(buf);
+    // Read decoded bytes using Buffer struct
+    Buffer decoded;
+    decoded.readFromObject(decodedBuf);
     Lua::print("The length of the buffer is:");
-    Lua::print(static_cast<int>(len));
+    Lua::print(static_cast<int>(decoded.size));
     output.clear();
-    for (unsigned int i = 0; i < len; i++) {
-        /*if (i % 1000 == 0) {
-            Lua::print("Progress:");
-            Lua::print(static_cast<int>(i));
-            Rbxl::taskWait(0.1f);
-        } */
-        output.push_back((uint8_t)Rbxl::bufferReadI8(buf, i));
+    for (unsigned int i = 0; i < decoded.size; i++) {
+        output.push_back(decoded.data[i]);
     }
-
-    // Free the buffer
-    Rbxl::freeBuffer(buf);
-    return len;
+    return decoded.size;
 }
 
 #endif // BASE64_HPP

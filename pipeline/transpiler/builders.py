@@ -99,7 +99,6 @@ def build_shared_luau(enums_sparse_lines, enum_to_index_lines, rodat_lua_entries
         "",
         "-- VM object handle pool",
         "S.OBJECTS = {}",
-        "S.BUFFERS = {}",
         "S.NEXT_HANDLE = 1",
         "",
         "-- RODATA string table (address -> string)",

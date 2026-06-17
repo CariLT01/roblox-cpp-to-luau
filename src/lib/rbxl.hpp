@@ -262,70 +262,6 @@ class LuaObj;
 
 namespace Rbxl {
 
-    // ── Buffer Operations ──
-
-    // Syscall 21: Create a buffer of 'size' bytes, returns opaque handle in a0
-    void* createBuffer(unsigned int size) {
-        void* handle = nullptr;
-        asm volatile ("mv a0, %1; li a7, 21; ecall; mv %0, a0" : "=r"(handle) : "r"(size) : "a0", "a7");
-        return handle;
-    }
-
-    // Syscall 22: Free/destroy a buffer
-    void freeBuffer(void* handle) {
-        asm volatile ("mv a0, %0; li a7, 22; ecall" : : "r"(handle) : "a0", "a7");
-    }
-
-    // Syscall 23: Get buffer length in bytes
-    unsigned int bufferLen(void* handle) {
-        unsigned int result = 0;
-        asm volatile ("mv a0, %1; li a7, 23; ecall; mv %0, a0" : "=r"(result) : "r"(handle) : "a0", "a7");
-        return result;
-    }
-
-    // Syscall 24: Read signed 8-bit integer from buffer at offset
-    int bufferReadI8(void* handle, unsigned int offset) {
-        int result = 0;
-        asm volatile ("mv a0, %1; mv a1, %2; li a7, 24; ecall; mv %0, a0" : "=r"(result) : "r"(handle), "r"(offset) : "a0", "a1", "a7");
-        return result;
-    }
-
-    // Syscall 25: Write signed 8-bit integer to buffer at offset
-    void bufferWriteI8(void* handle, unsigned int offset, int value) {
-        asm volatile ("mv a0, %0; mv a1, %1; mv a2, %2; li a7, 25; ecall" : : "r"(handle), "r"(offset), "r"(value) : "a0", "a1", "a2", "a7");
-    }
-
-    // Syscall 26: Read signed 32-bit integer from buffer at offset
-    int bufferReadI32(void* handle, unsigned int offset) {
-        int result = 0;
-        asm volatile ("mv a0, %1; mv a1, %2; li a7, 26; ecall; mv %0, a0" : "=r"(result) : "r"(handle), "r"(offset) : "a0", "a1", "a7");
-        return result;
-    }
-
-    // Syscall 27: Write signed 32-bit integer to buffer at offset
-    void bufferWriteI32(void* handle, unsigned int offset, int value) {
-        asm volatile ("mv a0, %0; mv a1, %1; mv a2, %2; li a7, 27; ecall" : : "r"(handle), "r"(offset), "r"(value) : "a0", "a1", "a2", "a7");
-    }
-
-    // Syscall 28: Read 32-bit float from buffer at offset (returns raw bits as int)
-    float bufferReadF32(void* handle, unsigned int offset) {
-        float result = 0.0f;
-        asm volatile ("mv a0, %1; mv a1, %2; li a7, 28; ecall; mv %0, a0" : "=r"(result) : "r"(handle), "r"(offset) : "a0", "a1", "a7");
-        return result;
-    }
-
-    // Syscall 29: Write 32-bit float to buffer at offset
-    void bufferWriteF32(void* handle, unsigned int offset, float value) {
-        asm volatile ("mv a0, %0; mv a1, %1; mv a2, %2; li a7, 29; ecall" : : "r"(handle), "r"(offset), "r"(value) : "a0", "a1", "a2", "a7");
-    }
-
-    // Syscall 50: buffer.fromstring(str) — returns buffer handle in a0
-    void* bufferFromString(const char* str) {
-        void* handle = nullptr;
-        asm volatile ("mv a0, %1; li a7, 50; ecall; mv %0, a0" : "=r"(handle) : "r"(str) : "a0", "a7");
-        return handle;
-    }
-
     // ── Math Operations ──
 
     // Syscall 39: rad — convert degrees to radians in-place at *ptr
@@ -413,59 +349,59 @@ namespace Rbxl {
     // Syscall 65: call(handle, flags, args...) — calls OBJECTS[handle] as a function
     // Register layout: a0=handle, a1=arg1, a2=arg2, a3=flags, a4=arg3, a5=arg4, a6=arg5
 
-    // 0 extra args — zero unused arg regs so the handler doesn't pass garbage
+    // 0 extra args — set unused arg regs to -1 sentinel so the handler can skip them
     void* call(void* handle, int flags) {
         void* result = nullptr;
         asm volatile (
-            "mv a0, %1; mv a3, %2; mv a1, x0; mv a2, x0; mv a4, x0; mv a5, x0; mv a6, x0; li a7, 65; ecall; mv %0, a0"
+            "mv a0, %1; mv a3, %2; addi a1, x0, -1; addi a2, x0, -1; addi a4, x0, -1; addi a5, x0, -1; addi a6, x0, -1; li a7, 65; ecall; mv %0, a0"
             : "=r"(result) : "r"(handle), "r"(flags)
             : "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7"
         );
         return result;
     }
 
-    // 1 extra arg — zero unused a2, a4, a5, a6
+    // 1 extra arg — set unused a2, a4, a5, a6 to -1 sentinel
     template<typename A1>
     void* call(void* handle, const A1& a1, int flags) {
         void* result = nullptr;
         asm volatile (
-            "mv a0, %1; mv a1, %2; mv a3, %3; mv a2, x0; mv a4, x0; mv a5, x0; mv a6, x0; li a7, 65; ecall; mv %0, a0"
+            "mv a0, %1; mv a1, %2; mv a3, %3; addi a2, x0, -1; addi a4, x0, -1; addi a5, x0, -1; addi a6, x0, -1; li a7, 65; ecall; mv %0, a0"
             : "=r"(result) : "r"(handle), "r"(a1), "r"(flags)
             : "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7"
         );
         return result;
     }
 
-    // 2 extra args — zero unused a4, a5, a6
+    // 2 extra args — set unused a4, a5, a6 to -1 sentinel
     template<typename A1, typename A2>
     void* call(void* handle, const A1& a1, const A2& a2, int flags) {
         void* result = nullptr;
         asm volatile (
-            "mv a0, %1; mv a1, %2; mv a2, %3; mv a3, %4; mv a4, x0; mv a5, x0; mv a6, x0; li a7, 65; ecall; mv %0, a0"
+            "mv a0, %1; mv a1, %2; mv a2, %3; mv a3, %4; addi a4, x0, -1; addi a5, x0, -1; addi a6, x0, -1; li a7, 65; ecall; mv %0, a0"
             : "=r"(result) : "r"(handle), "r"(a1), "r"(a2), "r"(flags)
             : "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7"
         );
         return result;
     }
 
-    // 3 extra args — zero unused a5, a6
+    // 3 extra args — set unused a5, a6 to -1 sentinel
     template<typename A1, typename A2, typename A3>
     void* call(void* handle, const A1& a1, const A2& a2, const A3& a3, int flags) {
         void* result = nullptr;
         asm volatile (
-            "mv a0, %1; mv a1, %2; mv a2, %3; mv a3, %5; mv a4, %4; mv a5, x0; mv a6, x0; li a7, 65; ecall; mv %0, a0"
+            "mv a0, %1; mv a1, %2; mv a2, %3; mv a3, %5; mv a4, %4; addi a5, x0, -1; addi a6, x0, -1; li a7, 65; ecall; mv %0, a0"
             : "=r"(result) : "r"(handle), "r"(a1), "r"(a2), "r"(a3), "r"(flags)
             : "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7"
         );
         return result;
     }
 
-    // 4 extra args — zero unused a6
+    // 4 extra args — set unused a6 to -1 sentinel
     template<typename A1, typename A2, typename A3, typename A4>
     void* call(void* handle, const A1& a1, const A2& a2, const A3& a3, const A4& a4, int flags) {
         void* result = nullptr;
         asm volatile (
-            "mv a0, %1; mv a1, %2; mv a2, %3; mv a3, %6; mv a4, %4; mv a5, %5; mv a6, x0; li a7, 65; ecall; mv %0, a0"
+            "mv a0, %1; mv a1, %2; mv a2, %3; mv a3, %6; mv a4, %4; mv a5, %5; addi a6, x0, -1; li a7, 65; ecall; mv %0, a0"
             : "=r"(result) : "r"(handle), "r"(a1), "r"(a2), "r"(a3), "r"(a4), "r"(flags)
             : "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7"
         );
@@ -599,6 +535,15 @@ public:
     static LuaObj fromString(const char* s) {
         void* handle;
         asm volatile("mv a0, %1; li a7, 69; ecall; mv %0, a0" : "=r"(handle) : "r"(s) : "a0", "a7");
+        return LuaObj(handle);
+    }
+    // Syscall 74: fromFunction(void* funcAddr) — wraps a C++ function address
+    // in a callable Luau function and stores it in OBJECTS, returning a handle.
+    // The handle can then be used with call() / callMethod() / callMethodStatic()
+    // just like any other object handle.
+    static LuaObj fromFunction(void* funcAddr) {
+        void* handle;
+        asm volatile("mv a0, %1; li a7, 74; ecall; mv %0, a0" : "=r"(handle) : "r"(funcAddr) : "a0", "a7");
         return LuaObj(handle);
     }
 
@@ -739,6 +684,70 @@ public:
     template<typename A1, typename A2, typename A3, typename A4>
     void* callMethodStatic(const char* methodName, const A1& a1, const A2& a2, const A3& a3, const A4& a4, int flags) const {
         return getPropertyObject(methodName).call(a1, a2, a3, a4, flags | 256);
+    }
+};
+
+// ── Buffer: fixed-size byte array bridging C++ ↔ Luau buffer objects ──────
+// Uses the universal handle API (getGlobal + callMethodStatic) — no buffer syscalls.
+struct Buffer {
+    static const int MAX_SIZE = 65536;  // 64KB, same as a memory page
+    uint8_t data[MAX_SIZE];
+    unsigned int size;
+
+    Buffer() : size(0) {}
+
+    // Read a Luau buffer object (stored in OBJECTS) into this C++ array.
+    void readFromObject(void* objHandle) {
+        LuaObj bufferLib = LuaObj::getGlobal("buffer");
+
+        // Call buffer.len(bufHandle) to get the size
+        unsigned int len = (unsigned int)(unsigned long)bufferLib.callMethodStatic(
+            "len",
+            objHandle,
+            RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT
+        );
+        size = len < MAX_SIZE ? len : MAX_SIZE;
+
+        // Read bytes one by one: buffer.readi8(bufHandle, i)
+        // Only arg1 is a handle; offset (int)i passes as raw register value.
+        for (unsigned int i = 0; i < size; i++) {
+            int val = (int)(unsigned long)bufferLib.callMethodStatic(
+                "readi8",
+                objHandle,
+                (int)i,
+                RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT
+            );
+            data[i] = (uint8_t)val;
+        }
+
+        bufferLib.release();
+    }
+
+    // Write this C++ array into a new Luau buffer object, store in OBJECTS, return handle.
+    void* toObject() const {
+        LuaObj bufferLib = LuaObj::getGlobal("buffer");
+
+        // Create buffer: buffer.create(size) — size is raw int, no OBJECTS flag.
+        void* handle = bufferLib.callMethodStatic(
+            "create",
+            (int)size,
+            RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT
+        );
+
+        // Write bytes: buffer.writei8(bufHandle, i, data[i])
+        // Only arg1 is a handle; offset and value are raw ints.
+        for (unsigned int i = 0; i < size; i++) {
+            bufferLib.callMethodStatic(
+                "writei8",
+                handle,
+                (int)i,
+                (int)data[i],
+                RBXL_METHOD_ARG_1_IS_OBJECT_BIT
+            );
+        }
+
+        bufferLib.release();
+        return handle;
     }
 };
 

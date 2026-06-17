@@ -35,16 +35,6 @@ def _handle_ecall(handler_body, current_func, addr_int,
     is_print_bool = current_func and "printEb" in current_func
     is_print_float = current_func and "printEf" in current_func
 
-    is_create_buffer = current_func and "createBuffer" in current_func
-    is_free_buffer = current_func and "freeBuffer" in current_func
-    is_buffer_len = current_func and "bufferLen" in current_func
-    is_buffer_read_i8 = current_func and "bufferReadI8" in current_func
-    is_buffer_write_i8 = current_func and "bufferWriteI8" in current_func
-    is_buffer_read_i32 = current_func and "bufferReadI32" in current_func
-    is_buffer_write_i32 = current_func and "bufferWriteI32" in current_func
-    is_buffer_read_f32 = current_func and "bufferReadF32" in current_func
-    is_buffer_write_f32 = current_func and "bufferWriteF32" in current_func
-    is_buffer_from_string = current_func and "bufferFromString" in current_func
 
     is_malloc = current_func and "malloc" in current_func
     is_free = current_func and "free" in current_func
@@ -67,6 +57,7 @@ def _handle_ecall(handler_body, current_func, addr_int,
     is_to_bool = current_func and "toBool" in current_func
     is_from_string = current_func and "fromString" in current_func
     is_to_string = current_func and "toString" in current_func
+    is_from_function = current_func and "fromFunction" in current_func
 
     ecall_is_halt = False
 
@@ -97,42 +88,6 @@ def _handle_ecall(handler_body, current_func, addr_int,
         handler_body.append("        print(reg[11] ~= 0)")
     elif is_print_float:
         handler_body.append("        print(bits_to_f32(read_mem32(reg[11])))")
-
-    # Buffer operations
-    elif is_create_buffer or tracked_a7_syscall == 21:
-        handler_body.append("        local _buf = buffer.create(reg[11])")
-        handler_body.append("        BUFFERS[S.NEXT_HANDLE] = _buf")
-        handler_body.append("        reg[11] = S.NEXT_HANDLE")
-        handler_body.append("        S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
-    elif is_free_buffer or tracked_a7_syscall == 22:
-        handler_body.append("        BUFFERS[reg[11]] = nil")
-    elif is_buffer_len or tracked_a7_syscall == 23:
-        handler_body.append("        local _buf = BUFFERS[reg[11]]")
-        handler_body.append("        reg[11] = _buf and buffer.len(_buf) or 0")
-    elif is_buffer_read_i8 or tracked_a7_syscall == 24:
-        handler_body.append("        local _buf = BUFFERS[reg[11]]")
-        handler_body.append("        reg[11] = _buf and buffer.readi8(_buf, reg[12]) or 0")
-    elif is_buffer_write_i8 or tracked_a7_syscall == 25:
-        handler_body.append("        local _buf = BUFFERS[reg[11]]")
-        handler_body.append("        if _buf then buffer.writei8(_buf, reg[12], reg[13]) end")
-    elif is_buffer_read_i32 or tracked_a7_syscall == 26:
-        handler_body.append("        local _buf = BUFFERS[reg[11]]")
-        handler_body.append("        reg[11] = _buf and buffer.readi32(_buf, reg[12]) or 0")
-    elif is_buffer_write_i32 or tracked_a7_syscall == 27:
-        handler_body.append("        local _buf = BUFFERS[reg[11]]")
-        handler_body.append("        if _buf then buffer.writei32(_buf, reg[12], reg[13]) end")
-    elif is_buffer_read_f32 or tracked_a7_syscall == 28:
-        handler_body.append("        local _buf = BUFFERS[reg[11]]")
-        handler_body.append("        reg[11] = _buf and f32_to_bits(buffer.readf32(_buf, reg[12])) or 0")
-    elif is_buffer_write_f32 or tracked_a7_syscall == 29:
-        handler_body.append("        local _buf = BUFFERS[reg[11]]")
-        handler_body.append("        if _buf then buffer.writef32(_buf, reg[12], bits_to_f32(reg[13])) end")
-    elif is_buffer_from_string or tracked_a7_syscall == 50:
-        handler_body.append("        local _strVal = RODATA[reg[11]] or ''")
-        handler_body.append("        local _buf = buffer.fromstring(_strVal)")
-        handler_body.append("        BUFFERS[S.NEXT_HANDLE] = _buf")
-        handler_body.append("        reg[11] = S.NEXT_HANDLE")
-        handler_body.append("        S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
 
     # Memory operations
     elif is_malloc or tracked_a7_syscall == 30:
@@ -413,54 +368,45 @@ def _handle_ecall(handler_body, current_func, addr_int,
         handler_body.append("            reg[11] = 0")
         handler_body.append("        else")
         handler_body.append("            local _hasReturn = bit32.band(_flags, 1) ~= 0")
-        handler_body.append("            local _returnIsObj = bit32.band(_flags, 2) ~= 0")
-        handler_body.append("            local _returnIsBuffer = bit32.band(_flags, 32) ~= 0")
+        handler_body.append("            local _returnIsHandle = bit32.band(_flags, 34) ~= 0")
         handler_body.append("            local _selfPrepended = bit32.band(_flags, 2097152) ~= 0  -- callMethod prepends self to a1")
         handler_body.append("            local _arg1IsFn  = bit32.band(_flags, 8192) ~= 0")
-        handler_body.append("            local _arg1IsBuf = bit32.band(_flags, 512) ~= 0")
+        handler_body.append("            local _arg1IsHandle = bit32.band(_flags, 131584) ~= 0")
         handler_body.append("            local _arg1IsStr = bit32.band(_flags, 8) ~= 0")
-        handler_body.append("            local _arg1IsObj = bit32.band(_flags, 131072) ~= 0")
         handler_body.append("            local _arg2IsFn  = bit32.band(_flags, 16384) ~= 0")
-        handler_body.append("            local _arg2IsBuf = bit32.band(_flags, 1024) ~= 0")
+        handler_body.append("            local _arg2IsHandle = bit32.band(_flags, 263168) ~= 0")
         handler_body.append("            local _arg2IsStr = bit32.band(_flags, 16) ~= 0")
-        handler_body.append("            local _arg2IsObj = bit32.band(_flags, 262144) ~= 0")
         handler_body.append("            local _arg3IsFn  = bit32.band(_flags, 32768) ~= 0")
-        handler_body.append("            local _arg3IsBuf = bit32.band(_flags, 2048) ~= 0")
+        handler_body.append("            local _arg3IsHandle = bit32.band(_flags, 526336) ~= 0")
         handler_body.append("            local _arg3IsStr = bit32.band(_flags, 64) ~= 0")
-        handler_body.append("            local _arg3IsObj = bit32.band(_flags, 524288) ~= 0")
         handler_body.append("            local _arg4IsFn  = bit32.band(_flags, 65536) ~= 0")
-        handler_body.append("            local _arg4IsBuf = bit32.band(_flags, 4096) ~= 0")
+        handler_body.append("            local _arg4IsHandle = bit32.band(_flags, 1052672) ~= 0")
         handler_body.append("            local _arg4IsStr = bit32.band(_flags, 128) ~= 0")
-        handler_body.append("            local _arg4IsObj = bit32.band(_flags, 1048576) ~= 0")
         handler_body.append("            local _args = {}")
         # When callMethod prepends self, a1 (reg[12]) is the self object and user args shift right
         handler_body.append("            if _selfPrepended then")
         handler_body.append("                _args[#_args + 1] = OBJECTS[reg[12]]  -- self (caller object)")
         handler_body.append("                -- User arg1 at a2 (reg[13]), user arg2 at a4 (reg[15]), user arg3 at a5 (reg[16]), user arg4 at a6 (reg[17])")
-        handler_body.append("                if _arg1IsFn then _args[#_args + 1] = S.get_function(reg[13]) elseif _arg1IsBuf then _args[#_args + 1] = BUFFERS[reg[13]] elseif _arg1IsObj then _args[#_args + 1] = OBJECTS[reg[13]] elseif _arg1IsStr then local _s = RODATA[reg[13]] or ''; _args[#_args + 1] = _s else _args[#_args + 1] = reg[13] end")
-        handler_body.append("                if _arg2IsFn then _args[#_args + 1] = S.get_function(reg[15]) elseif _arg2IsBuf then _args[#_args + 1] = BUFFERS[reg[15]] elseif _arg2IsObj then _args[#_args + 1] = OBJECTS[reg[15]] elseif _arg2IsStr then local _s = RODATA[reg[15]] or ''; _args[#_args + 1] = _s else _args[#_args + 1] = reg[15] end")
-        handler_body.append("                if _arg3IsFn then _args[#_args + 1] = S.get_function(reg[16]) elseif _arg3IsBuf then _args[#_args + 1] = BUFFERS[reg[16]] elseif _arg3IsObj then _args[#_args + 1] = OBJECTS[reg[16]] elseif _arg3IsStr then local _s = RODATA[reg[16]] or ''; _args[#_args + 1] = _s else _args[#_args + 1] = reg[16] end")
-        handler_body.append("                if _arg4IsFn then _args[#_args + 1] = S.get_function(reg[17]) elseif _arg4IsBuf then _args[#_args + 1] = BUFFERS[reg[17]] elseif _arg4IsObj then _args[#_args + 1] = OBJECTS[reg[17]] elseif _arg4IsStr then local _s = RODATA[reg[17]] or ''; _args[#_args + 1] = _s else _args[#_args + 1] = reg[17] end")
+        handler_body.append("                if _arg1IsFn then _args[#_args + 1] = S.get_function(reg[13]) elseif _arg1IsHandle then _args[#_args + 1] = OBJECTS[reg[13]] elseif _arg1IsStr then local _s = RODATA[reg[13]] or ''; _args[#_args + 1] = _s else _args[#_args + 1] = reg[13] end")
+        handler_body.append("                if _arg2IsFn then _args[#_args + 1] = S.get_function(reg[15]) elseif _arg2IsHandle then _args[#_args + 1] = OBJECTS[reg[15]] elseif _arg2IsStr then local _s = RODATA[reg[15]] or ''; _args[#_args + 1] = _s else _args[#_args + 1] = reg[15] end")
+        handler_body.append("                if _arg3IsFn then _args[#_args + 1] = S.get_function(reg[16]) elseif _arg3IsHandle then _args[#_args + 1] = OBJECTS[reg[16]] elseif _arg3IsStr then local _s = RODATA[reg[16]] or ''; _args[#_args + 1] = _s else _args[#_args + 1] = reg[16] end")
+        handler_body.append("                if _arg4IsFn then _args[#_args + 1] = S.get_function(reg[17]) elseif _arg4IsHandle then _args[#_args + 1] = OBJECTS[reg[17]] elseif _arg4IsStr then local _s = RODATA[reg[17]] or ''; _args[#_args + 1] = _s else _args[#_args + 1] = reg[17] end")
         handler_body.append("            else")
-        handler_body.append("                if _arg1IsFn then _args[#_args + 1] = S.get_function(reg[12]) elseif _arg1IsBuf then _args[#_args + 1] = BUFFERS[reg[12]] elseif _arg1IsObj then _args[#_args + 1] = OBJECTS[reg[12]] elseif _arg1IsStr then local _s = RODATA[reg[12]] or ''; _args[#_args + 1] = _s else if reg[12] ~= 0 then _args[#_args + 1] = reg[12] end end")
-        handler_body.append("                if _arg2IsFn then _args[#_args + 1] = S.get_function(reg[13]) elseif _arg2IsBuf then _args[#_args + 1] = BUFFERS[reg[13]] elseif _arg2IsObj then _args[#_args + 1] = OBJECTS[reg[13]] elseif _arg2IsStr then local _s = RODATA[reg[13]] or ''; _args[#_args + 1] = _s else if reg[13] ~= 0 then _args[#_args + 1] = reg[13] end end")
-        handler_body.append("                if _arg3IsFn then _args[#_args + 1] = S.get_function(reg[15]) elseif _arg3IsBuf then _args[#_args + 1] = BUFFERS[reg[15]] elseif _arg3IsObj then _args[#_args + 1] = OBJECTS[reg[15]] elseif _arg3IsStr then local _s = RODATA[reg[15]] or ''; _args[#_args + 1] = _s else if reg[15] ~= 0 then _args[#_args + 1] = reg[15] end end")
-        handler_body.append("                if _arg4IsFn then _args[#_args + 1] = S.get_function(reg[16]) elseif _arg4IsBuf then _args[#_args + 1] = BUFFERS[reg[16]] elseif _arg4IsObj then _args[#_args + 1] = OBJECTS[reg[16]] elseif _arg4IsStr then local _s = RODATA[reg[16]] or ''; _args[#_args + 1] = _s else if reg[16] ~= 0 then _args[#_args + 1] = reg[16] end end")
+        handler_body.append("                if _arg1IsFn then _args[#_args + 1] = S.get_function(reg[12]) elseif _arg1IsHandle then _args[#_args + 1] = OBJECTS[reg[12]] elseif _arg1IsStr then local _s = RODATA[reg[12]] or ''; _args[#_args + 1] = _s else if reg[12] ~= 4294967295 then _args[#_args + 1] = reg[12] end end")
+        handler_body.append("                if _arg2IsFn then _args[#_args + 1] = S.get_function(reg[13]) elseif _arg2IsHandle then _args[#_args + 1] = OBJECTS[reg[13]] elseif _arg2IsStr then local _s = RODATA[reg[13]] or ''; _args[#_args + 1] = _s else if reg[13] ~= 4294967295 then _args[#_args + 1] = reg[13] end end")
+        handler_body.append("                if _arg3IsFn then _args[#_args + 1] = S.get_function(reg[15]) elseif _arg3IsHandle then _args[#_args + 1] = OBJECTS[reg[15]] elseif _arg3IsStr then local _s = RODATA[reg[15]] or ''; _args[#_args + 1] = _s else if reg[15] ~= 4294967295 then _args[#_args + 1] = reg[15] end end")
+        handler_body.append("                if _arg4IsFn then _args[#_args + 1] = S.get_function(reg[16]) elseif _arg4IsHandle then _args[#_args + 1] = OBJECTS[reg[16]] elseif _arg4IsStr then local _s = RODATA[reg[16]] or ''; _args[#_args + 1] = _s else if reg[16] ~= 4294967295 then _args[#_args + 1] = reg[16] end end")
         handler_body.append("            end")
         handler_body.append("            if not _selfPrepended then")
         handler_body.append("                -- arg5 (reg[17]=a6): only the 5-arg C++ template passes a real value here.")
-        handler_body.append("                -- 1-4 arg templates zero a6, so skip it to avoid injecting trailing 0 args.")
-        handler_body.append("                if reg[17] ~= 0 then")
+        handler_body.append("                -- 1-4 arg templates set a6 to -1 sentinel, so skip it to avoid injecting trailing -1 args.")
+        handler_body.append("                if reg[17] ~= 4294967295 then")
         handler_body.append("                    _args[#_args + 1] = reg[17]")
         handler_body.append("                end")
         handler_body.append("            end")
         handler_body.append("            if _hasReturn then")
         handler_body.append("                local _r = _fn(table.unpack(_args))")
-        handler_body.append("                if _returnIsBuffer then")
-        handler_body.append("                    BUFFERS[S.NEXT_HANDLE] = _r")
-        handler_body.append("                    reg[11] = S.NEXT_HANDLE")
-        handler_body.append("                    S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
-        handler_body.append("                elseif _returnIsObj then")
+        handler_body.append("                if _returnIsHandle then")
         handler_body.append("                    if _r then")
         handler_body.append("                        OBJECTS[S.NEXT_HANDLE] = _r")
         handler_body.append("                        reg[11] = S.NEXT_HANDLE")
@@ -475,6 +421,14 @@ def _handle_ecall(handler_body, current_func, addr_int,
         handler_body.append("                _fn(table.unpack(_args))")
         handler_body.append("            end")
         handler_body.append("        end")
+
+    # Syscall 74: fromFunction(void* funcAddr) — wraps a C++ function address in a
+    # callable Luau function and stores it in OBJECTS, returning a handle.
+    elif is_from_function or tracked_a7_syscall == 74:
+        handler_body.append("        local _wrapper = S.get_function(reg[11])")
+        handler_body.append("        OBJECTS[S.NEXT_HANDLE] = _wrapper")
+        handler_body.append("        reg[11] = S.NEXT_HANDLE")
+        handler_body.append("        S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
 
     # Syscall 52: getGlobal(name) — wraps the named Lua global in OBJECTS and returns a handle
     elif is_get_global or tracked_a7_syscall == 52:

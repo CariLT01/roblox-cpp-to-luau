@@ -87,7 +87,6 @@ def split_into_chunks(all_handler_strings):
         )
         chunk_lines.append("local reg = S.reg")
         chunk_lines.append("local OBJECTS = S.OBJECTS")
-        chunk_lines.append("local BUFFERS = S.BUFFERS")
         chunk_lines.append("local RODATA = S.RODATA")
         chunk_lines.append("local ENUMS = S.ENUMS")
         chunk_lines.append("local ENUM_TO_INDEX = S.ENUM_TO_INDEX")

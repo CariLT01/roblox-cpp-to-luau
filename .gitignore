@@ -6,3 +6,5 @@ pipeline/.old
 
 # Ignore the specific data.json file
 pipeline/preprocess/data.json
+
+knowledge.md

@@ -85,7 +85,8 @@ int main() {
     baseplate.setPropertyObject("Position", objectLua);
 
     LuaObj touchedEvent = baseplate.getMethod("Touched");
-    touchedEvent.callMethod("Connect", (void*)touchedCallback, RBXL_METHOD_ARG_1_IS_FUNCTION_BIT);
+    LuaObj callbackHandle = LuaObj::fromFunction((void*)touchedCallback);
+    touchedEvent.callMethod("Connect", callbackHandle, RBXL_METHOD_ARG_1_IS_OBJECT_BIT);
 
 
 
