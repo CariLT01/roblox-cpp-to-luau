@@ -1,6 +1,6 @@
 # cpp-luau-obfs
 
-> **⚠️ Experimental** — This project is a work in progress. The Roblox bindings have no type safety yet; method calls go through raw `callMethod` / `callMethodStatic` with manual flag arguments.
+> **⚠️ Experimental** — This project is a work in progress.
 
 An obfuscation pipeline for Roblox that lets you write your logic in **C++** instead of Luau. Your C++ code gets compiled to a RISC-V virtual machine embedded in Luau — the output is a tangle of opaque closures, integer bit-manipulation, and paged memory access that bears no resemblance to the original source.
 
@@ -17,23 +17,12 @@ C++ Source  →  RISC-V Cross-Compile  →  Disassembly  →  Python Transpiler 
 
 ## Features
 
-1. Inter-op with existing Lua logic using require(), and hook onto Roblox bindings using .callMethod(), callMethodStatic().
-2. Ability to use C++ features, like pointers, smart pointers, classes, and templating.
-3. Bundle different files and classes into a single giant bundle.
-4. Makes reconstructing the original source code hard due to aggressive optimizations done by the compiler.
-5. Uses native code to speed up the emulation (still slower than native luau)
-
-## CAVEATS
-
-> [!WARNING]
-> This project is experimental! Expect bugs with wrong addresses, registries containing corrupt data, and other issues with emulation.
-
-- **Performance will be slower due to emulation (x5.5 or more)**. Use inter-opping with require() for hot paths.
-- **Maximum 4 arguments for callMethod, callMethodStatic**
-- No typing support for Roblox methods as of right now
-- Many data types may not be supported yet
-- Separation between heap and stack like in regular C++; make sure to be careful when passing data between threads or functions. Objects allocated on the stack may be deleted or out of scope, causing you to read garbage when trying to read it later.
-- Use smart pointers or make sure to manually free objects on heap to prevent memory leak (max: 512 MB)
+- Write game logic in C++ with classes, templates, pointers, and smart pointers
+- Cross-compile to RISC-V and transpile to obfuscated Luau
+- Inter-op with existing Luau via `require()` and Roblox bindings via method calls
+- Bundle multiple source files into a single output
+- Aggressive compiler optimizations make reconstructing original source extremely difficult
+- Paged memory emulation, register-based dispatch, identifier mangling, block merging
 
 ## Quick Start
 
@@ -68,98 +57,208 @@ Place your source files in `src/`. The entry point is `main()`:
 #include "lib/rbxl.hpp"
 
 int main() {
-    Part p = Part::create();
-    p.setName("ObfuscatedPart");
-    p.setPosition(0, 10, 0);
-    p.setSize(4, 1, 4);
-    p.setColor(0.2f, 0.6f, 1.0f);
-    p.setAnchored(true);
+    LuaObj task = LuaObj::getGlobal("task");
+    LuaObj instance = LuaObj::getGlobal("Instance");
+    LuaObj partStr = LuaObj::fromString("Part");
+    LuaObj workspace = LuaObj::getService("Workspace");
 
-    Instance workspace = Instance::getWorkspace();
-    Instance model = workspace.waitForChild("MyModel");
-    if (model.valid()) {
-        model.destroy();
-    }
+    // Create a Part
+    LuaObj part = instance.callMethodStatic("new",
+        RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT,
+        partStr);
+
+    // Set properties
+    part.setPropertyObject("Name", LuaObj::fromString("ObfuscatedPart"));
+    part.setPropertyObject("Anchored", LuaObj::fromBool(true));
+
+    Vector3 pos(0.0f, 10.0f, 0.0f);
+    part.setPropertyObject("Position", LuaObj::fromHandle(pos.toObject()));
+    part.setPropertyObject("Parent", workspace);
 
     return 0;
 }
 ```
 
-## Available APIs
+## API Reference
 
-### Roblox Instances
+### The Universal Handle API
 
-| C++ API | Description |
-|---------|-------------|
-| `Instance::New(type)` | Create any Instance by type name |
-| `Part::create()` | Create a Part |
-| `inst.destroy()` | Destroy an instance |
-| `inst.clone()` | Clone an instance |
-| `inst.findFirstChild(name)` | FindFirstChild |
-| `inst.waitForChild(name)` | WaitForChild |
-| `inst.require()` | Require a ModuleScript |
+Everything is a handle — an integer index into `S.OBJECTS`, a single Luau table that stores Roblox Instances, Vector3s, CFrames, buffers, primitives, and function wrappers. Every handle is released automatically via RAII.
+
+### LuaObj — Core Handle Class
+
+```cpp
+LuaObj()                    // Null handle
+LuaObj(void* handle)        // Wrap a raw handle (takes ownership)
+obj.handle()                // Extract raw void* handle
+obj.valid()                 // Check if handle is non-null
+obj.release()               // Explicitly release (destructor handles auto-release)
+```
+
+### Method Calls (flags-first API)
+
+```cpp
+// Static call (. syntax, no self): instance.new("Part")
+obj.callMethodStatic("MethodName", flags, args...)
+
+// Method call (: syntax, self prepended): part:Destroy()
+obj.callMethod("MethodName", flags, args...)
+
+// Direct call: this IS the function handle
+obj.callObj(flags, args...)
+obj.call(flags)             // Legacy flags-last API, delegates to callObj
+obj.call(args..., flags)    // Legacy flags-last (deprecated, use callMethodStatic)
+```
+
+**Example:**
+
+```cpp
+// Create a Part
+LuaObj part = instance.callMethodStatic("new",
+    RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT,
+    partStr);
+
+// Connect to an event
+LuaObj touchedEvent = baseplate.getMethod("Touched");
+touchedEvent.callMethod("Connect", RBXL_METHOD_ARG_1_IS_OBJECT_BIT, callbackHandle);
+
+// Call a module function
+module.callMethodStatic("Hello", 0);
+```
 
 ### Property Access
 
-| C++ API | Description |
-|---------|-------------|
-| `inst.getPropertyFloat(name)` / `setPropertyFloat(name, val)` | Float properties |
-| `inst.getPropertyVector3(name)` / `setPropertyVector3(name, v)` | Vector3 properties |
-| `inst.getPropertyColor3(name)` / `setPropertyColor3(name, c)` | Color3 properties |
-| `inst.getPropertyCFrame(name)` / `setPropertyCFrame(name, cf)` | CFrame properties |
-| `inst.setPropertyString(name, val)` | String properties |
-| `inst.setPropertyBool(name, val)` | Bool properties |
-| `inst.getPropertyEnum(name)` / `setPropertyEnum(name, val)` | Enum properties |
-| `inst.setPropertyInstance(name, target)` | Instance properties |
-
-### Services & Globals
-
-| C++ API | Description |
-|---------|-------------|
-| `Instance::getWorkspace()` | Get workspace |
-| `Instance::getPlayers()` | Get Players service |
-| `inst.getLocalPlayer()` | Get LocalPlayer |
-| `Instance::getService(name)` | Get any service by name |
-| `Instance::getGlobal(name)` | Get a Lua global as a handle |
-
-### Method Calls (Untyped)
-
-> **Note:** These are raw method calls with no type checking. You pass method names as strings and manually specify flags for argument types and return types.
-
 ```cpp
-// :Method() syntax — passes self implicitly
-inst.callMethod("Connect", callbackFn, RBXL_METHOD_ARG_1_IS_FUNCTION_BIT);
-
-// .Method() syntax — static call, no implicit self
-inst.callMethodStatic("GetService", "Players",
-    RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT | RBXL_METHOD_ARG_1_IS_STRING_BIT);
+LuaObj obj.getPropertyObject("PropertyName")     // Returns any property as a handle
+obj.setPropertyObject("PropertyName", value)     // Sets a property from a handle
+obj.getMethod("MethodName")                      // Get an event/signal (e.g. "Touched")
 ```
 
-| C++ API | Description |
-|---------|-------------|
-| `inst.callMethod(name, args..., flags)` | Method call (`:` syntax) |
-| `inst.callMethodStatic(name, args..., flags)` | Static call (`.` syntax) |
-| `inst.getMethod(name)` | Get a method/signal (e.g., `.Touched`) |
+### Service & Global Lookups
 
-### Buffers
+```cpp
+LuaObj::getService("ServiceName")     // e.g. "Workspace", "Players", "ReplicatedStorage"
+LuaObj::getGlobal("GlobalName")       // e.g. "Instance", "require", "game"
+obj.require()                         // Require a ModuleScript
+```
 
-`Rbxl::createBuffer(size)`, `Rbxl::freeBuffer(handle)`, `Rbxl::bufferLen(handle)`, `Rbxl::bufferReadI8/I32/F32(handle, offset)`, `Rbxl::bufferWriteI8/I32/F32(handle, offset, value)`, `Rbxl::bufferFromString(str)`
+### Primitive Conversions (syscalls 66-73)
+
+```cpp
+LuaObj::fromFloat(f)     // float → handle
+LuaObj::fromInt(i)       // int → handle
+LuaObj::fromBool(b)      // bool → handle
+LuaObj::fromString(s)    // const char* → handle
+LuaObj::fromFunction(fn) // C++ function ptr → callable handle (syscall 74)
+LuaObj::fromEnum(idx)    // enum index → handle
+
+obj.toFloat()            // handle → float
+obj.toInt()              // handle → int
+obj.toBool()             // handle → bool
+obj.toString()           // handle → const char*
+obj.toEnum()             // handle → enum index
+```
+
+### Struct Bridge (syscalls 54-61)
+
+C++ structs ↔ Roblox data types via `readFromObject` / `toObject`:
+
+| Struct | C++ Layout | Roblox Type |
+|--------|-----------|-------------|
+| `Vector3` | 3× float | `Vector3.new(x, y, z)` |
+| `CFrame` | 12× float | `CFrame.new(...)` |
+| `Color3` | 3× float | `Color3.new(r, g, b)` |
+| `UDim2` | 4× float | `UDim2.new(xs, xo, ys, yo)` |
+
+```cpp
+Vector3 v(1.0f, 2.0f, 3.0f);
+void* handle = v.toObject();           // C++ struct → OBJECTS handle
+LuaObj obj = LuaObj::fromHandle(handle);
+
+Vector3 v2;
+v2.readFromObject(obj.handle());       // OBJECTS handle → C++ struct
+```
+
+### Buffer (byte arrays)
+
+The `Buffer` struct bridges C++ `uint8_t` arrays ↔ Roblox `buffer` objects. No dedicated buffer syscalls — uses the register-based call path (syscall 65) for raw integer passthrough.
+
+```cpp
+Buffer buf;
+buf.data[buf.size++] = ...;           // Fill with bytes
+void* handle = buf.toObject();        // → OBJECTS handle
+
+Buffer decoded;
+decoded.readFromObject(handle);       // OBJECTS handle → C++ uint8_t array
+// decoded.data[0..len-1], decoded.size
+```
 
 ### Memory
 
-`Rbxl::malloc(size)`, `Rbxl::free(ptr)`, `Rbxl::heapUsed()`
+```cpp
+void* ptr = Rbxl::malloc(size);       // Allocate on virtual heap
+Rbxl::free(ptr);                      // Free allocation
+int used = Rbxl::heapUsed();          // Bytes allocated
+```
 
 ### Threading
 
-`Lua::taskWait(seconds)`, `Lua::taskSpawn(func, args...)`, `Lua::taskDefer(func, args...)`
+```cpp
+Lua::taskSpawn(funcAddr, args...);    // Spawn a new thread
+Lua::taskDefer(funcAddr, args...);    // Defer to next heartbeat
+Lua::print(val);                      // Print int, bool, float, or string
+```
 
-### Utilities
+### Math
 
-`Lua::print(val)`, `math::rad(deg)`, `math::sin(x)`, `math::cos(x)`
+```cpp
+float rad = math::rad(90.0f);         // Degrees → radians
+float s = math::sin(rad);             // Sine
+float c = math::cos(rad);             // Cosine
+```
 
 ### C++ Data Structures
 
-The freestanding environment includes: `vector<T>`, `map<K,V>`, `unique_ptr<T>`, `shared_ptr<T>`, `make_unique<T>()`, `make_shared<T>()`, and a `CFrame` class with operations like `cframe_lookAt`, `cframe_mul`, `cframe_inverse`, `cframe_fromEulerAngles`.
+The freestanding environment includes: `vector<T>`, `map<K,V>`, `unique_ptr<T>`, `shared_ptr<T>`, `make_unique<T>()`, `make_shared<T>()`.
+
+### CFrame Operations
+
+```cpp
+CFrame(posX, posY, posZ)
+CFrame(posX, posY, posZ, r00, r01, r02, r10, r11, r12, r20, r21, r22)
+cframe_lookAt(pos, target)
+cframe_mul(a, b)
+cframe_inverse(cf)
+cframe_fromEulerAngles(rx, ry, rz)
+cframe_pointToWorld(cf, v)
+cframe_pointToObject(cf, v)
+cframe_vectorToWorld(cf, v)
+cframe_vectorToObject(cf, v)
+```
+
+## Architecture
+
+### Two Call Paths
+
+| Path | Syscall | Used by | Args |
+|------|---------|---------|------|
+| **Payload stack** | 75 | All non-Buffer calls | OBJECTS handles only, any count |
+| **Register-based** | 65 | Buffer operations only | Raw ints + handles, up to 5 args |
+
+The payload path (syscall 75) writes `(count, fn_handle, args...)` to a stack-local buffer and passes one pointer. The Luau handler reads the count from the header and loops over OBJECTS handles. No sentinel guards, no arg-type flag bit-twiddling.
+
+Buffer operations use the register path (syscall 65) because they pass raw integers (offsets, sizes) that aren't OBJECTS handles.
+
+### Flags
+
+Only two flags matter for the payload path:
+
+| Bit | Value | Name | Purpose |
+|-----|-------|------|---------|
+| 0 | 1 | `HAS_RETURN_BIT` | Method returns a value |
+| 1 | 2 | `RETURN_IS_OBJ_BIT` | Return value → OBJECTS handle |
+
+All other flags (IS_STRING, IS_BUFFER, IS_FUNCTION, IS_OBJECT, IS_STATIC, ARG_0_IS_SELF) are only used by the register-based path (Buffer).
 
 ## Why It's Hard to Reverse-Engineer
 
@@ -168,7 +267,18 @@ The freestanding environment includes: `vector<T>`, `map<K,V>`, `unique_ptr<T>`,
 - **Paged memory emulation** — All memory access goes through 64KB page buffers with bit-shifted addressing.
 - **Register-based dispatch** — A while-loop fetches closures from a dispatch table. Each handler returns the next PC address.
 - **Chunk splitting** — Handlers are split across multiple ModuleScripts.
-- **Tail merging** — Blocks are inlined to skip dispatch cycles, flattening the control flow graph.
+- **Block merging** — Sequential instructions are merged into single closures, flattening the control flow graph.
+
+## Caveats
+
+> [!WARNING]
+> This project is experimental! Expect bugs with wrong addresses, corrupt register data, and other emulation issues.
+
+- **Performance is slower than native Luau (~5.5x or more)**. Use `require()` for hot paths.
+- **Heap limit:** 512 MB max, no defragmentation
+- **Template instantiation:** Method calls with >5 args use stack allocation, which works but hasn't been tested at high arg counts
+- **Many Roblox data types may not be fully supported yet**
+- **Stack/heap distinction:** Objects on the stack are destroyed when the function returns; use `toObject()` and handle ownership explicitly
 
 ## Project Structure
 
@@ -182,8 +292,8 @@ The freestanding environment includes: `vector<T>`, `map<K,V>`, `unique_ptr<T>`,
 │   └── transpiler/                    # Python RISC-V → Luau transpiler
 │       ├── main.py                    # Entry point
 │       ├── asm_parser.py              # Assembly parser
-│       ├── blocks.py                  # Block merging & tail merging
-│       ├── builders.py                # Luau module builders
+│       ├── blocks.py                  # Block merging
+│       ├── builders.py                # Luau module builders (shared.luau, run.luau)
 │       ├── generator.py               # Instruction → handler generator
 │       ├── obfuscator.py              # Identifier mangling
 │       └── handlers/                  # Per-instruction-type handlers
@@ -191,16 +301,17 @@ The freestanding environment includes: `vector<T>`, `map<K,V>`, `unique_ptr<T>`,
 │           ├── control.py             # Branches & jumps
 │           ├── float.py               # Floating-point
 │           ├── memory.py              # Loads & stores
-│           └── ecall/                 # Roblox API syscalls
+│           └── ecall/                 # Roblox API syscalls (including syscall 75 payload)
 └── src/
-    ├── main.cpp                       # Your C++ code goes here
+    ├── main_basic.cpp                 # Entry point
+    ├── main_image.cpp                 # Image rendering demo
     └── lib/                           # Freestanding C++ headers
-        ├── rbxl.hpp                   # Roblox API bindings (Instance, Part, CFrame, etc.)
+        ├── rbxl.hpp                   # LuaObj, Rbxl::call, callObj, structs, Buffer
         ├── heap.hpp                   # Virtual heap + vector<T>
         ├── pointers.hpp               # unique_ptr, shared_ptr
         ├── map.hpp                    # Hash map
-        ├── lua.hpp                    # print, taskWait, taskSpawn, taskDefer
+        ├── lua.hpp                    # print, taskSpawn, taskDefer
         ├── math.hpp                   # Trig functions
         ├── enums.hpp                  # Roblox Enum table
-        └── ...
+        └── base64.hpp                 # Base64 decoder via EncodingService
 ```
