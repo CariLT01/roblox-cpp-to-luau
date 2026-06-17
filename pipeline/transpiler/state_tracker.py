@@ -13,6 +13,45 @@ def _track_state(mnemonic, args, rodata_addr_table, rodata_table,
                  tracked_a4_literal, tracked_a4_rodata_str,
                  tracked_a5_literal, tracked_a5_rodata_str):
     """Update compile-time state trackers based on current instruction."""
+
+    # Helper: map register name -> (literal, rodata_str) for tracked regs
+    _reg_map = {
+        "a0": ("lit", "a0"), "x10": ("lit", "a0"),
+        "a1": ("lit", "a1"), "x11": ("lit", "a1"),
+        "a2": ("lit", "a2"), "x12": ("lit", "a2"),
+        "a3": ("lit", "a3"), "x13": ("lit", "a3"),
+        "a4": ("lit", "a4"), "x14": ("lit", "a4"),
+        "a5": ("lit", "a5"), "x15": ("lit", "a5"),
+        "a7": ("syscall", "a7"), "x17": ("syscall", "a7"),
+    }
+
+    # Build a lookup of current tracked values
+    _tracked_literals = {
+        "a0": tracked_a0_literal,
+        "a1": tracked_a1_literal,
+        "a2": tracked_a2_literal,
+        "a3": tracked_a3_literal,
+        "a4": tracked_a4_literal,
+        "a5": tracked_a5_literal,
+        "a7": tracked_a7_syscall,
+    }
+    _tracked_rodata = {
+        "a1": tracked_a1_rodata_str,
+        "a2": tracked_a2_rodata_str,
+        "a3": tracked_a3_rodata_str,
+        "a4": tracked_a4_rodata_str,
+        "a5": tracked_a5_rodata_str,
+    }
+
+    def _get_tracked(reg):
+        """Get the tracked literal value for a named register (only a0-a5, a7)."""
+        return _tracked_literals.get(reg, "nil")
+
+    def _get_tracked_rodata(reg):
+        """Get the tracked rodata string for a named register."""
+        return _tracked_rodata.get(reg, None)
+
+    # Only track addi, lui, and the li pseudo-instruction
     if mnemonic not in ["li", "addi", "lui"]:
         return (tracked_a7_syscall, tracked_a0_literal, tracked_value_type,
                 tracked_a1_literal, tracked_a1_rodata_str,
@@ -22,43 +61,95 @@ def _track_state(mnemonic, args, rodata_addr_table, rodata_table,
                 tracked_a5_literal, tracked_a5_rodata_str)
 
     dest_reg = args[0]
+    src_reg = args[1] if len(args) > 1 else None
 
-    if dest_reg in ["a7", "x17"]:
+    # Check for register move: addi rd, rs, 0 where rs != x0
+    is_reg_move = False
+    if mnemonic == "addi" and len(args) >= 2:
         clean_imm = args[-1].split('#')[0].strip()
-        try:
-            tracked_a7_syscall = int(clean_imm)
-        except ValueError:
-            pass
+        if clean_imm == "0" and src_reg not in ["x0", "zero"]:
+            is_reg_move = True
 
-    elif dest_reg in ["a0", "x10"]:
-        tracked_a0_literal, tracked_value_type = _resolve_literal(
-            args, mnemonic, rodata_addr_table, rodata_table
-        )
+    # ── Handle register moves: propagate source register's tracked value ──
+    if is_reg_move and src_reg:
+        src_name = src_reg.replace("x1", "a").replace("x", "")
+        if src_name in ["a0", "a1", "a2", "a3", "a4", "a5"]:
+            src_lit = _get_tracked(src_name)
+            src_rodata = _get_tracked_rodata(src_name)
+            if dest_reg in ["a0", "x10"]:
+                tracked_a0_literal = src_lit
+            elif dest_reg in ["a1", "x11"]:
+                tracked_a1_literal = src_lit
+                tracked_a1_rodata_str = src_rodata
+            elif dest_reg in ["a2", "x12"]:
+                tracked_a2_literal = src_lit
+                tracked_a2_rodata_str = src_rodata
+            elif dest_reg in ["a3", "x13"]:
+                tracked_a3_literal = src_lit
+                tracked_a3_rodata_str = src_rodata
+            elif dest_reg in ["a4", "x14"]:
+                tracked_a4_literal = src_lit
+                tracked_a4_rodata_str = src_rodata
+            elif dest_reg in ["a5", "x15"]:
+                tracked_a5_literal = src_lit
+                tracked_a5_rodata_str = src_rodata
+        # Don't clobber a7 during moves (it's set by li a7, N explicitly)
 
-    elif dest_reg in ["a1", "x11"]:
-        _, tracked_a1_literal, tracked_a1_rodata_str = _resolve_arg_literal(
-            args, rodata_addr_table
-        )
+    # ── Handle immediate loads ──
+    else:
+        if dest_reg in ["a7", "x17"]:
+            clean_imm = args[-1].split('#')[0].strip()
+            try:
+                tracked_a7_syscall = int(clean_imm)
+            except ValueError:
+                pass
 
-    elif dest_reg in ["a2", "x12"]:
-        _, tracked_a2_literal, tracked_a2_rodata_str = _resolve_arg_literal(
-            args, rodata_addr_table
-        )
+        elif dest_reg in ["a0", "x10"]:
+            new_literal, tracked_value_type = _resolve_literal(
+                args, mnemonic, rodata_addr_table, rodata_table
+            )
+            if new_literal != "nil":
+                tracked_a0_literal = new_literal
 
-    elif dest_reg in ["a3", "x13"]:
-        _, tracked_a3_literal, tracked_a3_rodata_str = _resolve_arg_literal(
-            args, rodata_addr_table
-        )
+        elif dest_reg in ["a1", "x11"]:
+            _, new_literal, new_rodata = _resolve_arg_literal(
+                args, rodata_addr_table
+            )
+            if new_literal != "nil":
+                tracked_a1_literal = new_literal
+                tracked_a1_rodata_str = new_rodata
 
-    elif dest_reg in ["a4", "x14"]:
-        _, tracked_a4_literal, tracked_a4_rodata_str = _resolve_arg_literal(
-            args, rodata_addr_table
-        )
+        elif dest_reg in ["a2", "x12"]:
+            _, new_literal, new_rodata = _resolve_arg_literal(
+                args, rodata_addr_table
+            )
+            if new_literal != "nil":
+                tracked_a2_literal = new_literal
+                tracked_a2_rodata_str = new_rodata
 
-    elif dest_reg in ["a5", "x15"]:
-        _, tracked_a5_literal, tracked_a5_rodata_str = _resolve_arg_literal(
-            args, rodata_addr_table
-        )
+        elif dest_reg in ["a3", "x13"]:
+            _, new_literal, new_rodata = _resolve_arg_literal(
+                args, rodata_addr_table
+            )
+            if new_literal != "nil":
+                tracked_a3_literal = new_literal
+                tracked_a3_rodata_str = new_rodata
+
+        elif dest_reg in ["a4", "x14"]:
+            _, new_literal, new_rodata = _resolve_arg_literal(
+                args, rodata_addr_table
+            )
+            if new_literal != "nil":
+                tracked_a4_literal = new_literal
+                tracked_a4_rodata_str = new_rodata
+
+        elif dest_reg in ["a5", "x15"]:
+            _, new_literal, new_rodata = _resolve_arg_literal(
+                args, rodata_addr_table
+            )
+            if new_literal != "nil":
+                tracked_a5_literal = new_literal
+                tracked_a5_rodata_str = new_rodata
 
     return (tracked_a7_syscall, tracked_a0_literal, tracked_value_type,
             tracked_a1_literal, tracked_a1_rodata_str,

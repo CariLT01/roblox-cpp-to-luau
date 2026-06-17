@@ -80,6 +80,7 @@ def generate_handler_bodies(parsed_instructions, rodata_addr_table, rodata_table
                 tracked_a3_literal, tracked_a3_rodata_str,
                 tracked_a4_rodata_str, tracked_a5_literal,
                 tracked_a5_rodata_str, tracked_a2_literal,
+                rodata_addr_table,
                 validate=validate
             )
         # --- R-Type Math (RV32I + RV32M) ---

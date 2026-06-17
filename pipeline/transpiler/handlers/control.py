@@ -62,12 +62,16 @@ def _handle_jalr(handler_body, args, addr_int):
 def _handle_lui(handler_body, args, addr_int):
     rd = clean_reg(args[0])
     imm = args[1]
-    handler_body.append(f"        {rd} = {int(imm, 0) * 4096 & 0xFFFFFFFF}")
+    # x0/zero is hardwired to 0 in RISC-V — never write to reg[1]
+    if rd != "reg[1]":
+        handler_body.append(f"        {rd} = {int(imm, 0) * 4096 & 0xFFFFFFFF}")
     handler_body.append(f"        return {addr_int + 4}")
 
 
 def _handle_auipc(handler_body, args, addr_int):
     rd = clean_reg(args[0])
     imm = args[1]
-    handler_body.append(f"        {rd} = {(addr_int + int(imm, 0) * 4096) & 0xFFFFFFFF}")
+    # x0/zero is hardwired to 0 in RISC-V — never write to reg[1]
+    if rd != "reg[1]":
+        handler_body.append(f"        {rd} = {(addr_int + int(imm, 0) * 4096) & 0xFFFFFFFF}")
     handler_body.append(f"        return {addr_int + 4}")

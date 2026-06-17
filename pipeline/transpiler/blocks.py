@@ -40,8 +40,9 @@ def merge_into_blocks(all_inst_bodies, branch_targets):
                     and all_inst_bodies[b + 1]['addr'] in branch_targets
                 )
 
-                if next_is_target:
-                    # This is the last instruction before a branch target: keep return
+                if next_is_target or b + 1 == len(all_inst_bodies):
+                    # Last instruction of block (end of file or before branch target):
+                    # keep the return statement so the VM dispatch loop continues.
                     merged_lines.extend(inst['body_lines'])
                     b += 1
                     break

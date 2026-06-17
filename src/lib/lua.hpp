@@ -2,7 +2,6 @@
 //
 // Functions that map directly to Lua globals / standard libraries:
 //   print()         → Lua print()
-//   taskWait()      → task.wait()
 //   taskSpawn()     → task.spawn()
 //   taskDefer()     → task.defer()
 //
@@ -47,20 +46,6 @@ namespace Lua {
         volatile float v = val;
         volatile float* ptr = &v;
         asm volatile ("mv a0, %0; li a7, 7; ecall" : : "r"(ptr) : "a0", "a7", "memory");
-    }
-
-    // ── task.wait() ──────────────────────────────────────────────────────
-
-    // Syscall 45: task.wait(seconds) — yields for n seconds, returns elapsed
-    inline float taskWait(float seconds) {
-        float result = 0.0f;
-        asm volatile (
-            "mv a0, %1; li a7, 45; ecall; mv %0, a0"
-            : "=r"(result)
-            : "r"(seconds)
-            : "a0", "a7"
-        );
-        return result;
     }
 
     // ── task.spawn() ─────────────────────────────────────────────────────

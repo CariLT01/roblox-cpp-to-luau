@@ -48,13 +48,17 @@ def _handle_fp(handler_body, mnemonic, args, addr_int):
         ird = clean_reg(args[0])
         frs1 = clean_reg_fp(args[1])
         frs2 = clean_reg_fp(args[2])
-        handler_body.append(f"        local _fa = bits_to_f32({frs1}); local _fb = bits_to_f32({frs2})")
-        if mnemonic == "feq.s":
-            handler_body.append(f"        if _fa ~= _fa or _fb ~= _fb then {ird} = 0 elseif _fa == _fb then {ird} = 1 else {ird} = 0 end")
-        elif mnemonic == "flt.s":
-            handler_body.append(f"        if _fa ~= _fa or _fb ~= _fb then {ird} = 0 elseif _fa < _fb then {ird} = 1 else {ird} = 0 end")
-        elif mnemonic == "fle.s":
-            handler_body.append(f"        if _fa ~= _fa or _fb ~= _fb then {ird} = 0 elseif _fa <= _fb then {ird} = 1 else {ird} = 0 end")
+        # x0/zero is hardwired to 0 in RISC-V — never write to reg[1]
+        if ird == "reg[1]":
+            pass
+        else:
+            handler_body.append(f"        local _fa = bits_to_f32({frs1}); local _fb = bits_to_f32({frs2})")
+            if mnemonic == "feq.s":
+                handler_body.append(f"        if _fa ~= _fa or _fb ~= _fb then {ird} = 0 elseif _fa == _fb then {ird} = 1 else {ird} = 0 end")
+            elif mnemonic == "flt.s":
+                handler_body.append(f"        if _fa ~= _fa or _fb ~= _fb then {ird} = 0 elseif _fa < _fb then {ird} = 1 else {ird} = 0 end")
+            elif mnemonic == "fle.s":
+                handler_body.append(f"        if _fa ~= _fa or _fb ~= _fb then {ird} = 0 elseif _fa <= _fb then {ird} = 1 else {ird} = 0 end")
 
     # FP Fused Multiply-Add
     elif mnemonic in ["fmadd.s", "fmsub.s", "fnmadd.s", "fnmsub.s"]:
@@ -91,7 +95,10 @@ def _handle_fp(handler_body, mnemonic, args, addr_int):
     elif mnemonic in ["fcvt.w.s", "fcvt.wu.s"]:
         ird = clean_reg(args[0])
         frs1 = clean_reg_fp(args[1])
-        if mnemonic == "fcvt.w.s":
+        # x0/zero is hardwired to 0 in RISC-V — never write to reg[1]
+        if ird == "reg[1]":
+            pass
+        elif mnemonic == "fcvt.w.s":
             handler_body.append(f"        local _v = bits_to_f32({frs1})")
             handler_body.append(f"        if _v ~= _v then {ird} = 0x7FFFFFFF")
             handler_body.append(f"        elseif _v >= 2147483648 then {ird} = 0x7FFFFFFF")
@@ -108,7 +115,9 @@ def _handle_fp(handler_body, mnemonic, args, addr_int):
         if mnemonic == "fmv.x.w":
             ird = clean_reg(args[0])
             frs1 = clean_reg_fp(args[1])
-            handler_body.append(f"        {ird} = {frs1}")
+            # x0/zero is hardwired to 0 in RISC-V — never write to reg[1]
+            if ird != "reg[1]":
+                handler_body.append(f"        {ird} = {frs1}")
         else:
             frd = clean_reg_fp(args[0])
             irs1 = clean_reg(args[1])
@@ -118,16 +127,20 @@ def _handle_fp(handler_body, mnemonic, args, addr_int):
     elif mnemonic == "fclass.s":
         ird = clean_reg(args[0])
         frs1 = clean_reg_fp(args[1])
-        handler_body.append(f"        local _v = bits_to_f32({frs1}); local _b = {frs1}")
-        handler_body.append(f"        if _v ~= _v then {ird} = bit32.lshift(1, 9)")
-        handler_body.append(f"        elseif _v == math.huge then {ird} = bit32.lshift(1, 7)")
-        handler_body.append(f"        elseif _v == -math.huge then {ird} = bit32.lshift(1, 0)")
-        handler_body.append(f"        elseif _v == 0 then")
-        handler_body.append(f"            if bit32.band(_b, 0x80000000) ~= 0 then {ird} = bit32.lshift(1, 3) else {ird} = bit32.lshift(1, 4) end")
-        handler_body.append(f"        elseif math.abs(_v) < 1.1754943508222875e-38 then")
-        handler_body.append(f"            if _v > 0 then {ird} = bit32.lshift(1, 5) else {ird} = bit32.lshift(1, 2) end")
-        handler_body.append(f"        else")
-        handler_body.append(f"            if _v > 0 then {ird} = bit32.lshift(1, 6) else {ird} = bit32.lshift(1, 1) end")
-        handler_body.append(f"        end")
+        # x0/zero is hardwired to 0 in RISC-V — never write to reg[1]
+        if ird == "reg[1]":
+            pass
+        else:
+            handler_body.append(f"        local _v = bits_to_f32({frs1}); local _b = {frs1}")
+            handler_body.append(f"        if _v ~= _v then {ird} = bit32.lshift(1, 9)")
+            handler_body.append(f"        elseif _v == math.huge then {ird} = bit32.lshift(1, 7)")
+            handler_body.append(f"        elseif _v == -math.huge then {ird} = bit32.lshift(1, 0)")
+            handler_body.append(f"        elseif _v == 0 then")
+            handler_body.append(f"            if bit32.band(_b, 0x80000000) ~= 0 then {ird} = bit32.lshift(1, 3) else {ird} = bit32.lshift(1, 4) end")
+            handler_body.append(f"        elseif math.abs(_v) < 1.1754943508222875e-38 then")
+            handler_body.append(f"            if _v > 0 then {ird} = bit32.lshift(1, 5) else {ird} = bit32.lshift(1, 2) end")
+            handler_body.append(f"        else")
+            handler_body.append(f"            if _v > 0 then {ird} = bit32.lshift(1, 6) else {ird} = bit32.lshift(1, 1) end")
+            handler_body.append(f"        end")
 
     handler_body.append(f"        return {addr_int + 4}")

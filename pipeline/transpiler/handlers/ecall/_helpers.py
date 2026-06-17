@@ -4,138 +4,6 @@ from ...utils import escape_lua_string
 import re
 
 
-def _emit_new_part(handler_body):
-    handler_body.append("        local _obj = Instance.new('Part')")
-    handler_body.append("        _obj.Parent = workspace")
-    handler_body.append("        OBJECTS[S.NEXT_HANDLE] = _obj")
-    handler_body.append("        reg[11] = S.NEXT_HANDLE")
-    handler_body.append("        S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
-
-
-def _emit_find_child(handler_body, method_name):
-    handler_body.append("        local _obj = OBJECTS[reg[11]]")
-    handler_body.append("        local _childName = RODATA[reg[12]] or '?'")
-    handler_body.append("        if _obj then")
-    handler_body.append(f"            local _child = _obj:{method_name}(_childName)")
-    handler_body.append("            if _child then")
-    handler_body.append("                OBJECTS[S.NEXT_HANDLE] = _child")
-    handler_body.append("                reg[11] = S.NEXT_HANDLE")
-    handler_body.append("                S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
-    handler_body.append("            else")
-    handler_body.append("                reg[11] = 0")
-    handler_body.append("            end")
-    handler_body.append("        else")
-    handler_body.append("            reg[11] = 0")
-    handler_body.append("        end")
-
-
-def _emit_getprop(handler_body, value_expr):
-    handler_body.append("        local _obj = OBJECTS[reg[11]]")
-    handler_body.append("        local _propName = RODATA[reg[12]] or '?'")
-    handler_body.append("        if _obj and _obj[_propName] ~= nil then")
-    handler_body.append(f"            reg[11] = {value_expr}")
-    handler_body.append("        else")
-    handler_body.append("            reg[11] = 0")
-    handler_body.append("        end")
-
-
-def _emit_getprop_vec3(handler_body):
-    handler_body.append("        local _obj = OBJECTS[reg[11]]")
-    handler_body.append("        local _propName = RODATA[reg[12]] or '?'")
-    handler_body.append("        local _outPtr = reg[13]")
-    handler_body.append("        if _obj and _obj[_propName] ~= nil then")
-    handler_body.append("            local _v = _obj[_propName]")
-    handler_body.append("            write_mem32(_outPtr, f32_to_bits(_v.X))")
-    handler_body.append("            write_mem32(_outPtr + 4, f32_to_bits(_v.Y))")
-    handler_body.append("            write_mem32(_outPtr + 8, f32_to_bits(_v.Z))")
-    handler_body.append("        end")
-
-
-def _emit_setprop_vec3(handler_body):
-    handler_body.append("        local _obj = OBJECTS[reg[11]]")
-    handler_body.append("        local _propName = RODATA[reg[12]] or '?'")
-    handler_body.append("        if _obj then")
-    handler_body.append("            _obj[_propName] = Vector3.new(")
-    handler_body.append("                bits_to_f32(reg[13]),")
-    handler_body.append("                bits_to_f32(reg[14]),")
-    handler_body.append("                bits_to_f32(reg[15])")
-    handler_body.append("            )")
-    handler_body.append("        end")
-
-
-def _emit_getprop_color3(handler_body):
-    handler_body.append("        local _obj = OBJECTS[reg[11]]")
-    handler_body.append("        local _propName = RODATA[reg[12]] or '?'")
-    handler_body.append("        local _outPtr = reg[13]")
-    handler_body.append("        if _obj and _obj[_propName] ~= nil then")
-    handler_body.append("            local _c = _obj[_propName]")
-    handler_body.append("            write_mem32(_outPtr, f32_to_bits(_c.R))")
-    handler_body.append("            write_mem32(_outPtr + 4, f32_to_bits(_c.G))")
-    handler_body.append("            write_mem32(_outPtr + 8, f32_to_bits(_c.B))")
-    handler_body.append("        end")
-
-
-def _emit_setprop_color3(handler_body):
-    handler_body.append("        local _obj = OBJECTS[reg[11]]")
-    handler_body.append("        local _propName = RODATA[reg[12]] or '?'")
-    handler_body.append("        if _obj then")
-    handler_body.append("            _obj[_propName] = Color3.new(")
-    handler_body.append("                bits_to_f32(reg[13]),")
-    handler_body.append("                bits_to_f32(reg[14]),")
-    handler_body.append("                bits_to_f32(reg[15])")
-    handler_body.append("            )")
-    handler_body.append("        end")
-
-
-def _emit_getprop_cframe(handler_body):
-    handler_body.append("        local _obj = OBJECTS[reg[11]]")
-    handler_body.append("        local _propName = RODATA[reg[12]] or '?'")
-    handler_body.append("        local _outPtr = reg[13]")
-    handler_body.append("        if _obj and _obj[_propName] ~= nil then")
-    handler_body.append("            local _cf = _obj[_propName]")
-    handler_body.append("            local _x, _y, _z, _r00, _r01, _r02, _r10, _r11, _r12, _r20, _r21, _r22 = _cf:GetComponents()")
-    handler_body.append("            write_mem32(_outPtr + 0, f32_to_bits(_x))")
-    handler_body.append("            write_mem32(_outPtr + 4, f32_to_bits(_y))")
-    handler_body.append("            write_mem32(_outPtr + 8, f32_to_bits(_z))")
-    handler_body.append("            write_mem32(_outPtr + 12, f32_to_bits(_r00))")
-    handler_body.append("            write_mem32(_outPtr + 16, f32_to_bits(_r01))")
-    handler_body.append("            write_mem32(_outPtr + 20, f32_to_bits(_r02))")
-    handler_body.append("            write_mem32(_outPtr + 24, f32_to_bits(_r10))")
-    handler_body.append("            write_mem32(_outPtr + 28, f32_to_bits(_r11))")
-    handler_body.append("            write_mem32(_outPtr + 32, f32_to_bits(_r12))")
-    handler_body.append("            write_mem32(_outPtr + 36, f32_to_bits(_r20))")
-    handler_body.append("            write_mem32(_outPtr + 40, f32_to_bits(_r21))")
-    handler_body.append("            write_mem32(_outPtr + 44, f32_to_bits(_r22))")
-    handler_body.append("        end")
-
-
-def _emit_setprop_cframe(handler_body):
-    handler_body.append("        local _obj = OBJECTS[reg[11]]")
-    handler_body.append("        local _propName = RODATA[reg[12]] or '?'")
-    handler_body.append("        local _srcPtr = reg[13]")
-    handler_body.append("        if _obj then")
-    for i in range(12):
-        handler_body.append(f"            local _r{i:02d} = bits_to_f32(read_mem32(_srcPtr + {i * 4}))")
-    # Fix the variable naming for CFrame constructor
-    # We already have _r00 through _r44 above; build the CFrame.new call
-    # Actually we need the proper names: x,y,z,r00,r01,r02,r10,r11,r12,r20,r21,r22
-    del handler_body[-12:]  # Remove the generic loop lines
-    handler_body.append("            local _x = bits_to_f32(read_mem32(_srcPtr + 0))")
-    handler_body.append("            local _y = bits_to_f32(read_mem32(_srcPtr + 4))")
-    handler_body.append("            local _z = bits_to_f32(read_mem32(_srcPtr + 8))")
-    handler_body.append("            local _r00 = bits_to_f32(read_mem32(_srcPtr + 12))")
-    handler_body.append("            local _r01 = bits_to_f32(read_mem32(_srcPtr + 16))")
-    handler_body.append("            local _r02 = bits_to_f32(read_mem32(_srcPtr + 20))")
-    handler_body.append("            local _r10 = bits_to_f32(read_mem32(_srcPtr + 24))")
-    handler_body.append("            local _r11 = bits_to_f32(read_mem32(_srcPtr + 28))")
-    handler_body.append("            local _r12 = bits_to_f32(read_mem32(_srcPtr + 32))")
-    handler_body.append("            local _r20 = bits_to_f32(read_mem32(_srcPtr + 36))")
-    handler_body.append("            local _r21 = bits_to_f32(read_mem32(_srcPtr + 40))")
-    handler_body.append("            local _r22 = bits_to_f32(read_mem32(_srcPtr + 44))")
-    handler_body.append("            _obj[_propName] = CFrame.new(_x, _y, _z, _r00, _r01, _r02, _r10, _r11, _r12, _r20, _r21, _r22)")
-    handler_body.append("        end")
-
-
 def _emit_malloc(handler_body):
     handler_body.append("        local _size = reg[11]")
     handler_body.append("        if _size == 0 then reg[11] = 0 else")
@@ -193,6 +61,10 @@ def _emit_generic_callmethod(handler_body, tracked_a3_literal,
       14 (16384)=arg2IsFunction
       15 (32768)=arg3IsFunction
       16 (65536)=arg4IsFunction
+      17 (131072)=arg1IsObject
+      18 (262144)=arg2IsObject
+      19 (524288)=arg3IsObject
+      20 (1048576)=arg4IsObject
     """
     flags = 0
     try:
@@ -216,6 +88,10 @@ def _emit_generic_callmethod(handler_body, tracked_a3_literal,
     arg2_is_function = bool(flags & 16384)
     arg3_is_function = bool(flags & 32768)
     arg4_is_function = bool(flags & 65536)
+    arg1_is_object = bool(flags & 131072)   # 1 << 17
+    arg2_is_object = bool(flags & 262144)   # 1 << 18
+    arg3_is_object = bool(flags & 524288)   # 1 << 19
+    arg4_is_object = bool(flags & 1048576)  # 1 << 20
 
     method_name = tracked_a1_rodata_str
 
@@ -240,6 +116,8 @@ def _emit_generic_callmethod(handler_body, tracked_a3_literal,
                 arg_parts.append('BUFFERS[reg[16]]')
             elif arg1_is_string:
                 arg_parts.append('RODATA[reg[16]] or ""')
+            elif arg1_is_object:
+                arg_parts.append('OBJECTS[reg[16]]')
             elif tracked_a5_rodata_str is not None or (tracked_a5_literal and tracked_a5_literal != 'nil'):
                 arg_parts.append('reg[16]')
             if arg2_is_function:
@@ -248,6 +126,8 @@ def _emit_generic_callmethod(handler_body, tracked_a3_literal,
                 arg_parts.append('BUFFERS[reg[15]]')
             elif arg2_is_string:
                 arg_parts.append('RODATA[reg[15]] or ""')
+            elif arg2_is_object:
+                arg_parts.append('OBJECTS[reg[15]]')
             elif tracked_a4_rodata_str is not None:
                 arg_parts.append('RODATA[reg[15]] or ""')
             if arg3_is_function:
@@ -256,6 +136,8 @@ def _emit_generic_callmethod(handler_body, tracked_a3_literal,
                 arg_parts.append('BUFFERS[reg[17]]')
             elif arg3_is_string:
                 arg_parts.append('RODATA[reg[17]] or ""')
+            elif arg3_is_object:
+                arg_parts.append('OBJECTS[reg[17]]')
 
             args_str = ', ' + ', '.join(arg_parts) if arg_parts else ''
 
@@ -295,6 +177,8 @@ def _emit_generic_callmethod(handler_body, tracked_a3_literal,
                 arg_parts.append('BUFFERS[reg[13]]')
             elif arg1_is_string:
                 arg_parts.append('RODATA[reg[13]] or ""')
+            elif arg1_is_object:
+                arg_parts.append('OBJECTS[reg[13]]')
             elif tracked_a2_literal != 'nil' and tracked_a2_literal is not None:
                 arg_parts.append('reg[13]')
             if arg2_is_function:
@@ -303,6 +187,8 @@ def _emit_generic_callmethod(handler_body, tracked_a3_literal,
                 arg_parts.append('BUFFERS[reg[15]]')
             elif arg2_is_string:
                 arg_parts.append('RODATA[reg[15]] or ""')
+            elif arg2_is_object:
+                arg_parts.append('OBJECTS[reg[15]]')
             elif tracked_a4_rodata_str is not None:
                 arg_parts.append('RODATA[reg[15]] or ""')
             if arg3_is_function:
@@ -311,12 +197,16 @@ def _emit_generic_callmethod(handler_body, tracked_a3_literal,
                 arg_parts.append('BUFFERS[reg[16]]')
             elif arg3_is_string:
                 arg_parts.append('RODATA[reg[16]] or ""')
+            elif arg3_is_object:
+                arg_parts.append('OBJECTS[reg[16]]')
             if arg4_is_function:
                 arg_parts.append('S.get_function(reg[17])')
             elif arg4_is_buffer:
                 arg_parts.append('BUFFERS[reg[17]]')
             elif arg4_is_string:
                 arg_parts.append('RODATA[reg[17]] or ""')
+            elif arg4_is_object:
+                arg_parts.append('OBJECTS[reg[17]]')
 
             args_str = ', ' + ', '.join(arg_parts) if arg_parts else ''
 
@@ -351,28 +241,51 @@ def _emit_generic_callmethod(handler_body, tracked_a3_literal,
         handler_body.append("        local _flags = reg[14]")
         handler_body.append("        if _obj and _methodName then")
         handler_body.append("            -- Runtime dynamic dispatch (slower, no templating)")
+        handler_body.append("            local _hasReturn = bit32.band(_flags, 1) ~= 0")
+        handler_body.append("            local _returnIsObj = bit32.band(_flags, 2) ~= 0")
+        handler_body.append("            local _returnIsBuffer = bit32.band(_flags, 32) ~= 0")
         handler_body.append("            local _arg1IsFn  = bit32.band(_flags, 8192) ~= 0")
         handler_body.append("            local _arg1IsBuf = bit32.band(_flags, 512) ~= 0")
         handler_body.append("            local _arg1IsStr = bit32.band(_flags, 8) ~= 0")
+        handler_body.append("            local _arg1IsObj = bit32.band(_flags, 131072) ~= 0")
         handler_body.append("            local _arg2IsFn  = bit32.band(_flags, 16384) ~= 0")
         handler_body.append("            local _arg2IsBuf = bit32.band(_flags, 1024) ~= 0")
         handler_body.append("            local _arg2IsStr = bit32.band(_flags, 16) ~= 0")
+        handler_body.append("            local _arg2IsObj = bit32.band(_flags, 262144) ~= 0")
         handler_body.append("            local _arg3IsFn  = bit32.band(_flags, 32768) ~= 0")
         handler_body.append("            local _arg3IsBuf = bit32.band(_flags, 2048) ~= 0")
         handler_body.append("            local _arg3IsStr = bit32.band(_flags, 64) ~= 0")
+        handler_body.append("            local _arg3IsObj = bit32.band(_flags, 524288) ~= 0")
         handler_body.append("            local _arg4IsFn  = bit32.band(_flags, 65536) ~= 0")
         handler_body.append("            local _arg4IsBuf = bit32.band(_flags, 4096) ~= 0")
         handler_body.append("            local _arg4IsStr = bit32.band(_flags, 128) ~= 0")
+        handler_body.append("            local _arg4IsObj = bit32.band(_flags, 1048576) ~= 0")
         handler_body.append("            local _isStatic = bit32.band(_flags, 256) ~= 0")
         handler_body.append("            local _args = {}")
-        handler_body.append("            if _arg1IsFn then _args[1] = S.get_function(reg[13]) elseif _arg1IsBuf then _args[1] = BUFFERS[reg[13]] elseif _arg1IsStr then _args[1] = RODATA[reg[13]] or '' else _args[1] = reg[13] end")
-        handler_body.append("            if _arg2IsFn then _args[2] = S.get_function(reg[15]) elseif _arg2IsBuf then _args[2] = BUFFERS[reg[15]] elseif _arg2IsStr then _args[2] = RODATA[reg[15]] or '' else _args[2] = reg[15] end")
-        handler_body.append("            if _arg3IsFn then _args[3] = S.get_function(reg[16]) elseif _arg3IsBuf then _args[3] = BUFFERS[reg[16]] elseif _arg3IsStr then _args[3] = RODATA[reg[16]] or '' else _args[3] = reg[16] end")
-        handler_body.append("            if _arg4IsFn then _args[4] = S.get_function(reg[17]) elseif _arg4IsBuf then _args[4] = BUFFERS[reg[17]] elseif _arg4IsStr then _args[4] = RODATA[reg[17]] or '' else _args[4] = reg[17] end")
-        handler_body.append("            if _isStatic then")
-        handler_body.append("                _obj[_methodName](table.unpack(_args))")
+        handler_body.append("            if not _isStatic then _args[1] = _obj end")
+        handler_body.append("            if _arg1IsFn then _args[#_args + 1] = S.get_function(reg[13]) elseif _arg1IsBuf then _args[#_args + 1] = BUFFERS[reg[13]] elseif _arg1IsObj then _args[#_args + 1] = OBJECTS[reg[13]] elseif _arg1IsStr then local _s = RODATA[reg[13]] or ''; _args[#_args + 1] = _s else _args[#_args + 1] = reg[13] end")
+        handler_body.append("            if _arg2IsFn then _args[#_args + 1] = S.get_function(reg[15]) elseif _arg2IsBuf then _args[#_args + 1] = BUFFERS[reg[15]] elseif _arg2IsObj then _args[#_args + 1] = OBJECTS[reg[15]] elseif _arg2IsStr then local _s = RODATA[reg[15]] or ''; _args[#_args + 1] = _s else _args[#_args + 1] = reg[15] end")
+        handler_body.append("            if _arg3IsFn then _args[#_args + 1] = S.get_function(reg[16]) elseif _arg3IsBuf then _args[#_args + 1] = BUFFERS[reg[16]] elseif _arg3IsObj then _args[#_args + 1] = OBJECTS[reg[16]] elseif _arg3IsStr then local _s = RODATA[reg[16]] or ''; _args[#_args + 1] = _s else _args[#_args + 1] = reg[16] end")
+        handler_body.append("            if _arg4IsFn then _args[#_args + 1] = S.get_function(reg[17]) elseif _arg4IsBuf then _args[#_args + 1] = BUFFERS[reg[17]] elseif _arg4IsObj then _args[#_args + 1] = OBJECTS[reg[17]] elseif _arg4IsStr then local _s = RODATA[reg[17]] or ''; _args[#_args + 1] = _s else _args[#_args + 1] = reg[17] end")
+        handler_body.append("            if _hasReturn then")
+        handler_body.append("                local _r = _obj[_methodName](table.unpack(_args))")
+        handler_body.append("                if _returnIsBuffer then")
+        handler_body.append("                    BUFFERS[S.NEXT_HANDLE] = _r")
+        handler_body.append("                    reg[11] = S.NEXT_HANDLE")
+        handler_body.append("                    S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
+        handler_body.append("                elseif _returnIsObj then")
+        handler_body.append("                    if _r then")
+        handler_body.append("                        OBJECTS[S.NEXT_HANDLE] = _r")
+        handler_body.append("                        reg[11] = S.NEXT_HANDLE")
+        handler_body.append("                        S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
+        handler_body.append("                    else")
+        handler_body.append("                        reg[11] = 0")
+        handler_body.append("                    end")
+        handler_body.append("                else")
+        handler_body.append("                    reg[11] = _r or 0")
+        handler_body.append("                end")
         handler_body.append("            else")
-        handler_body.append("                _obj[_methodName](_obj, table.unpack(_args))")
+        handler_body.append("                _obj[_methodName](table.unpack(_args))")
         handler_body.append("            end")
         handler_body.append("        end")
 
@@ -391,7 +304,118 @@ def _emit_callmethod_return(handler_body, return_is_obj, return_is_buffer):
         handler_body.append('            reg[11] = S.NEXT_HANDLE')
         handler_body.append('            S.NEXT_HANDLE = S.NEXT_HANDLE + 1')
     else:
-        handler_body.append('            reg[11] = _r')
+        handler_body.append('            reg[11] = _r or 0')
+
+
+# ── Struct ↔ OBJECTS table bridge ──────────────────────────────────────────────
+
+def _emit_struct_read_vec3(handler_body):
+    """Syscall 54: Read Vector3 from OBJECTS[reg[11]] into *reg[12]."""
+    handler_body.append("        local _v = OBJECTS[reg[11]]")
+    handler_body.append("        if _v then")
+    handler_body.append("            local _out = reg[12]")
+    handler_body.append("            write_mem32(_out + 0, f32_to_bits(_v.X))")
+    handler_body.append("            write_mem32(_out + 4, f32_to_bits(_v.Y))")
+    handler_body.append("            write_mem32(_out + 8, f32_to_bits(_v.Z))")
+    handler_body.append("        end")
+
+
+def _emit_struct_write_vec3(handler_body):
+    """Syscall 55: Store *reg[11] as Vector3 in OBJECTS, return handle."""
+    handler_body.append("        local _src = reg[11]")
+    handler_body.append("        local _x = bits_to_f32(read_mem32(_src + 0))")
+    handler_body.append("        local _y = bits_to_f32(read_mem32(_src + 4))")
+    handler_body.append("        local _z = bits_to_f32(read_mem32(_src + 8))")
+    handler_body.append("        OBJECTS[S.NEXT_HANDLE] = Vector3.new(_x, _y, _z)")
+    handler_body.append("        reg[11] = S.NEXT_HANDLE")
+    handler_body.append("        S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
+
+
+def _emit_struct_read_cframe(handler_body):
+    """Syscall 56: Read CFrame from OBJECTS[reg[11]] into *reg[12]."""
+    handler_body.append("        local _cf = OBJECTS[reg[11]]")
+    handler_body.append("        if _cf then")
+    handler_body.append("            local _out = reg[12]")
+    handler_body.append("            local _x, _y, _z, _r00, _r01, _r02, _r10, _r11, _r12, _r20, _r21, _r22 = _cf:GetComponents()")
+    handler_body.append("            write_mem32(_out + 0, f32_to_bits(_x))")
+    handler_body.append("            write_mem32(_out + 4, f32_to_bits(_y))")
+    handler_body.append("            write_mem32(_out + 8, f32_to_bits(_z))")
+    handler_body.append("            write_mem32(_out + 12, f32_to_bits(_r00))")
+    handler_body.append("            write_mem32(_out + 16, f32_to_bits(_r01))")
+    handler_body.append("            write_mem32(_out + 20, f32_to_bits(_r02))")
+    handler_body.append("            write_mem32(_out + 24, f32_to_bits(_r10))")
+    handler_body.append("            write_mem32(_out + 28, f32_to_bits(_r11))")
+    handler_body.append("            write_mem32(_out + 32, f32_to_bits(_r12))")
+    handler_body.append("            write_mem32(_out + 36, f32_to_bits(_r20))")
+    handler_body.append("            write_mem32(_out + 40, f32_to_bits(_r21))")
+    handler_body.append("            write_mem32(_out + 44, f32_to_bits(_r22))")
+    handler_body.append("        end")
+
+
+def _emit_struct_write_cframe(handler_body):
+    """Syscall 57: Store *reg[11] as CFrame in OBJECTS, return handle."""
+    handler_body.append("        local _src = reg[11]")
+    handler_body.append("        local _x = bits_to_f32(read_mem32(_src + 0))")
+    handler_body.append("        local _y = bits_to_f32(read_mem32(_src + 4))")
+    handler_body.append("        local _z = bits_to_f32(read_mem32(_src + 8))")
+    handler_body.append("        local _r00 = bits_to_f32(read_mem32(_src + 12))")
+    handler_body.append("        local _r01 = bits_to_f32(read_mem32(_src + 16))")
+    handler_body.append("        local _r02 = bits_to_f32(read_mem32(_src + 20))")
+    handler_body.append("        local _r10 = bits_to_f32(read_mem32(_src + 24))")
+    handler_body.append("        local _r11 = bits_to_f32(read_mem32(_src + 28))")
+    handler_body.append("        local _r12 = bits_to_f32(read_mem32(_src + 32))")
+    handler_body.append("        local _r20 = bits_to_f32(read_mem32(_src + 36))")
+    handler_body.append("        local _r21 = bits_to_f32(read_mem32(_src + 40))")
+    handler_body.append("        local _r22 = bits_to_f32(read_mem32(_src + 44))")
+    handler_body.append("        OBJECTS[S.NEXT_HANDLE] = CFrame.new(_x, _y, _z, _r00, _r01, _r02, _r10, _r11, _r12, _r20, _r21, _r22)")
+    handler_body.append("        reg[11] = S.NEXT_HANDLE")
+    handler_body.append("        S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
+
+
+def _emit_struct_read_color3(handler_body):
+    """Syscall 58: Read Color3 from OBJECTS[reg[11]] into *reg[12]."""
+    handler_body.append("        local _c = OBJECTS[reg[11]]")
+    handler_body.append("        if _c then")
+    handler_body.append("            local _out = reg[12]")
+    handler_body.append("            write_mem32(_out + 0, f32_to_bits(_c.R))")
+    handler_body.append("            write_mem32(_out + 4, f32_to_bits(_c.G))")
+    handler_body.append("            write_mem32(_out + 8, f32_to_bits(_c.B))")
+    handler_body.append("        end")
+
+
+def _emit_struct_write_color3(handler_body):
+    """Syscall 59: Store *reg[11] as Color3 in OBJECTS, return handle."""
+    handler_body.append("        local _src = reg[11]")
+    handler_body.append("        local _r = bits_to_f32(read_mem32(_src + 0))")
+    handler_body.append("        local _g = bits_to_f32(read_mem32(_src + 4))")
+    handler_body.append("        local _b = bits_to_f32(read_mem32(_src + 8))")
+    handler_body.append("        OBJECTS[S.NEXT_HANDLE] = Color3.new(_r, _g, _b)")
+    handler_body.append("        reg[11] = S.NEXT_HANDLE")
+    handler_body.append("        S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
+
+
+def _emit_struct_read_udim2(handler_body):
+    """Syscall 60: Read UDim2 from OBJECTS[reg[11]] into *reg[12]."""
+    handler_body.append("        local _u = OBJECTS[reg[11]]")
+    handler_body.append("        if _u then")
+    handler_body.append("            local _out = reg[12]")
+    handler_body.append("            write_mem32(_out + 0, f32_to_bits(_u.X.Scale))")
+    handler_body.append("            write_mem32(_out + 4, f32_to_bits(_u.X.Offset))")
+    handler_body.append("            write_mem32(_out + 8, f32_to_bits(_u.Y.Scale))")
+    handler_body.append("            write_mem32(_out + 12, f32_to_bits(_u.Y.Offset))")
+    handler_body.append("        end")
+
+
+def _emit_struct_write_udim2(handler_body):
+    """Syscall 61: Store *reg[11] as UDim2 in OBJECTS, return handle."""
+    handler_body.append("        local _src = reg[11]")
+    handler_body.append("        local _xs = bits_to_f32(read_mem32(_src + 0))")
+    handler_body.append("        local _xo = bits_to_f32(read_mem32(_src + 4))")
+    handler_body.append("        local _ys = bits_to_f32(read_mem32(_src + 8))")
+    handler_body.append("        local _yo = bits_to_f32(read_mem32(_src + 12))")
+    handler_body.append("        OBJECTS[S.NEXT_HANDLE] = UDim2.new(_xs, _xo, _ys, _yo)")
+    handler_body.append("        reg[11] = S.NEXT_HANDLE")
+    handler_body.append("        S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
 
 
 def _emit_runtime_callmethod(handler_body):
@@ -415,15 +439,19 @@ def _emit_runtime_callmethod(handler_body):
     handler_body.append("        local _arg1IsFunction = bit32.band(_flags, 8192) ~= 0")
     handler_body.append("        local _arg1IsBuffer = bit32.band(_flags, 512) ~= 0")
     handler_body.append("        local _arg1IsString = bit32.band(_flags, 8) ~= 0")
+    handler_body.append("        local _arg1IsObject = bit32.band(_flags, 131072) ~= 0")
     handler_body.append("        local _arg2IsFunction = bit32.band(_flags, 16384) ~= 0")
     handler_body.append("        local _arg2IsBuffer = bit32.band(_flags, 1024) ~= 0")
     handler_body.append("        local _arg2IsString = bit32.band(_flags, 16) ~= 0")
+    handler_body.append("        local _arg2IsObject = bit32.band(_flags, 262144) ~= 0")
     handler_body.append("        local _arg3IsFunction = bit32.band(_flags, 32768) ~= 0")
     handler_body.append("        local _arg3IsBuffer = bit32.band(_flags, 2048) ~= 0")
     handler_body.append("        local _arg3IsString = bit32.band(_flags, 64) ~= 0")
+    handler_body.append("        local _arg3IsObject = bit32.band(_flags, 524288) ~= 0")
     handler_body.append("        local _arg4IsFunction = bit32.band(_flags, 65536) ~= 0")
     handler_body.append("        local _arg4IsBuffer = bit32.band(_flags, 4096) ~= 0")
     handler_body.append("        local _arg4IsString = bit32.band(_flags, 128) ~= 0")
+    handler_body.append("        local _arg4IsObject = bit32.band(_flags, 1048576) ~= 0")
     handler_body.append("        local _isStatic = bit32.band(_flags, 256) ~= 0")
     handler_body.append("        local _obj = OBJECTS[_objHandle]")
     handler_body.append("        if _obj and _methodName then")
@@ -434,21 +462,25 @@ def _emit_runtime_callmethod(handler_body):
     handler_body.append("            -- arg1 in a2 (reg[13])")
     handler_body.append("            if _arg1IsFunction then _args[#_args + 1] = S.get_function(_arg1Val)")
     handler_body.append("            elseif _arg1IsBuffer then _args[#_args + 1] = BUFFERS[_arg1Val]")
+    handler_body.append("            elseif _arg1IsObject then _args[#_args + 1] = OBJECTS[_arg1Val]")
     handler_body.append("            elseif _arg1IsString then local _s = RODATA[_arg1Val] or ''; _args[#_args + 1] = _s")
     handler_body.append("            else _args[#_args + 1] = _arg1Val end")
     handler_body.append("            -- arg2 in a4 (reg[15])")
     handler_body.append("            if _arg2IsFunction then _args[#_args + 1] = S.get_function(reg[15])")
     handler_body.append("            elseif _arg2IsBuffer then _args[#_args + 1] = BUFFERS[reg[15]]")
+    handler_body.append("            elseif _arg2IsObject then _args[#_args + 1] = OBJECTS[reg[15]]")
     handler_body.append("            elseif _arg2IsString then local _s = RODATA[reg[15]] or ''; _args[#_args + 1] = _s")
     handler_body.append("            else _args[#_args + 1] = reg[15] end")
     handler_body.append("            -- arg3 in a5 (reg[16])")
     handler_body.append("            if _arg3IsFunction then _args[#_args + 1] = S.get_function(reg[16])")
     handler_body.append("            elseif _arg3IsBuffer then _args[#_args + 1] = BUFFERS[reg[16]]")
+    handler_body.append("            elseif _arg3IsObject then _args[#_args + 1] = OBJECTS[reg[16]]")
     handler_body.append("            elseif _arg3IsString then local _s = RODATA[reg[16]] or ''; _args[#_args + 1] = _s")
     handler_body.append("            else _args[#_args + 1] = reg[16] end")
     handler_body.append("            -- arg4 in a6 (reg[17])")
     handler_body.append("            if _arg4IsFunction then _args[#_args + 1] = S.get_function(reg[17])")
     handler_body.append("            elseif _arg4IsBuffer then _args[#_args + 1] = BUFFERS[reg[17]]")
+    handler_body.append("            elseif _arg4IsObject then _args[#_args + 1] = OBJECTS[reg[17]]")
     handler_body.append("            elseif _arg4IsString then local _s = RODATA[reg[17]] or ''; _args[#_args + 1] = _s")
     handler_body.append("            else _args[#_args + 1] = reg[17] end")
     handler_body.append("            if _hasReturn then")
@@ -466,7 +498,7 @@ def _emit_runtime_callmethod(handler_body):
     handler_body.append("                        reg[11] = 0")
     handler_body.append("                    end")
     handler_body.append("                else")
-    handler_body.append("                    reg[11] = _r")
+    handler_body.append("                    reg[11] = _r or 0")
     handler_body.append("                end")
     handler_body.append("            else")
     handler_body.append("                _obj[_methodName](table.unpack(_args))")

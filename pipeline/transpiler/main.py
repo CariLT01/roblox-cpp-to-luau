@@ -29,7 +29,7 @@ def parse_asm_to_modules(asm_text, validate=False):
       }
     """
     # --- Metadata parsing ---
-    enums_sparse_lines = parse_enums()
+    enums_sparse_lines, enum_to_index_lines = parse_enums()
     rodata_bytes, rodata_addr_table = parse_rodata_bytes(asm_text)
     rodata_table = parse_rodata_labels(asm_text)
     main_address_str, main_address_int = find_main_address(asm_text)
@@ -57,7 +57,7 @@ def parse_asm_to_modules(asm_text, validate=False):
 
     # --- Build output modules ---
     shared_content = build_shared_luau(
-        enums_sparse_lines, rodat_lua_entries, rodata_init_lines, main_address_str,
+        enums_sparse_lines, enum_to_index_lines, rodat_lua_entries, rodata_init_lines, main_address_str,
         validate=validate
     )
     run_content = build_run_luau(main_address_int, main_address_str, len(chunks))

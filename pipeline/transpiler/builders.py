@@ -3,7 +3,7 @@
 from .utils import escape_lua_string
 
 
-def build_shared_luau(enums_sparse_lines, rodat_lua_entries, rodata_init_lines,
+def build_shared_luau(enums_sparse_lines, enum_to_index_lines, rodat_lua_entries, rodata_init_lines,
                       main_address_str, validate=False):
     """Build shared.luau content string.
 
@@ -121,6 +121,7 @@ def build_shared_luau(enums_sparse_lines, rodat_lua_entries, rodata_init_lines,
     shared_lines.extend(enums_sparse_lines)
     shared_lines.append("")
     shared_lines.append("S.ENUM_TO_INDEX = {}")
+    shared_lines.extend(enum_to_index_lines)
     shared_lines.append("")
 
     # Handlers table
@@ -139,6 +140,7 @@ def build_shared_luau(enums_sparse_lines, rodat_lua_entries, rodata_init_lines,
     shared_lines.append("-- Thread state (multi-threading via task.spawn)")
     shared_lines.append("S.THREADS = {}")
     shared_lines.append("S.NEXT_THREAD_ID = 1")
+    shared_lines.append("S._vm_gen = 0  -- generation counter: bumped before each dispatch iteration")
     shared_lines.append("")
 
     # Function wrapper cache: maps C++ function addresses to callable Luau functions.
@@ -161,7 +163,7 @@ def build_shared_luau(enums_sparse_lines, rodat_lua_entries, rodata_init_lines,
     shared_lines.append("        local _reg = table.create(32, 0)")
     shared_lines.append("        local _args = {...}")
     shared_lines.append("        for _i = 1, #_args do")
-    shared_lines.append("            _reg[10 + _i] = _args[_i]  -- a0..aN = RISC-V arguments")
+    shared_lines.append("            _reg[10 + _i] = _args[_i] or 0  -- a0..aN = RISC-V arguments")
     shared_lines.append("        end")
     shared_lines.append("        _reg[2] = 0   -- ra=0 so the thread halts on return")
     shared_lines.append("        _reg[3] = S.reg[3]  -- inherit stack pointer")
@@ -178,33 +180,46 @@ def build_shared_luau(enums_sparse_lines, rodat_lua_entries, rodata_init_lines,
     shared_lines.append("")
     # Thread dispatch function: runs the VM dispatch loop with a per-thread register set.
     # Each thread gets its own 64K stack carved from the heap.
-    # NOTE: dispatch_thread does NOT save/restore S.reg/S.freg per instruction.
-    # Instead, the thread owns S.reg/S.freg during its entire timeslice. Yield points
-    # (taskWait, taskSpawn, taskDefer) are responsible for saving/restoring registers.
-    # This avoids stale-snapshot corruption when handlers yield and other threads run.
+    # S.reg/S.freg are shared globals. The thread restores its register state
+    # before each instruction.  After the handler returns, it checks whether
+    # another thread ran during a yield by comparing S._vm_gen against a
+    # snapshot taken before the handler call.  If the counter diverged, the
+    # save is SKIPPED because S.reg was corrupted during the yield and
+    # threadReg already holds the correct pre-yield state.
     shared_lines.append("-- Thread VM dispatch: runs a new dispatch loop with isolated registers")
     shared_lines.append("function S.dispatch_thread(threadReg, startPC)")
     shared_lines.append("    -- Per-thread floating-point register file")
     shared_lines.append("    local _threadFreg = table.create(32, 0)")
     shared_lines.append("    for _i = 1, 32 do _threadFreg[_i] = S.freg[_i] end")
     shared_lines.append("")
-    shared_lines.append("    -- Copy thread registers into S.reg/S.freg at entry (own the globals)")
-    shared_lines.append("    for _i = 1, 32 do")
-    shared_lines.append("        S.reg[_i] = threadReg[_i]")
-    shared_lines.append("        S.freg[_i] = _threadFreg[_i]")
-    shared_lines.append("    end")
-    shared_lines.append("")
     shared_lines.append("    local _pc = startPC")
     shared_lines.append("    while _pc and _pc ~= 0 do")
+    shared_lines.append("        -- Restore this thread's registers before each instruction.")
+    shared_lines.append("        -- (After a yield, another thread may have overwritten S.reg/S.freg.)")
+    shared_lines.append("        for _i = 1, 32 do")
+    shared_lines.append("            S.reg[_i] = threadReg[_i]")
+    shared_lines.append("            S.freg[_i] = _threadFreg[_i]")
+    shared_lines.append("        end")
     shared_lines.append("        local _handler = S.HANDLERS[_pc]")
     shared_lines.append("        if not _handler then break end")
-    shared_lines.append("        _pc = _handler()")
-    shared_lines.append("    end")
     shared_lines.append("")
-    shared_lines.append("    -- Thread finished: sync S.reg/S.freg back to threadReg/_threadFreg")
-    shared_lines.append("    for _i = 1, 32 do")
-    shared_lines.append("        threadReg[_i] = S.reg[_i]")
-    shared_lines.append("        _threadFreg[_i] = S.freg[_i]")
+    shared_lines.append("        -- Bump generation counter so other threads know we ran.")
+    shared_lines.append("        -- Snapshot it so we can detect if another thread entered")
+    shared_lines.append("        -- dispatch while our handler was yielded.")
+    shared_lines.append("        S._vm_gen = S._vm_gen + 1")
+    shared_lines.append("        local _myGen = S._vm_gen")
+    shared_lines.append("        _pc = _handler()")
+    shared_lines.append("")
+    shared_lines.append("        -- Only save if no other thread ran a dispatch iteration")
+    shared_lines.append("        -- during our handler call (which would have bumped _vm_gen).")
+    shared_lines.append("        -- If another thread ran, S.reg was corrupted; threadReg has")
+    shared_lines.append("        -- the correct pre-yield state for the next restore.")
+    shared_lines.append("        if S._vm_gen == _myGen then")
+    shared_lines.append("            for _i = 1, 32 do")
+    shared_lines.append("                threadReg[_i] = S.reg[_i]")
+    shared_lines.append("                _threadFreg[_i] = S.freg[_i]")
+    shared_lines.append("            end")
+    shared_lines.append("        end")
     shared_lines.append("    end")
     shared_lines.append("end")
     shared_lines.append("")
@@ -229,6 +244,30 @@ def build_shared_luau(enums_sparse_lines, rodat_lua_entries, rodata_init_lines,
             "end",
             "",
         ])
+
+    # ── Mirror Roblox built-in globals into _G ──
+    # In Roblox Luau, _G only contains user-defined globals; built-in globals
+    # (task, Instance, game, etc.) are NOT in _G.  getGlobal(syscall 52) falls
+    # back to _G[name] when it cannot resolve the name at compile time.  By
+    # mirroring these globals into _G, the fallback path works correctly.
+    shared_lines.append("-- Mirror Roblox built-in globals into _G (used by getGlobal fallback)")
+    shared_lines.append("_G.task = task")
+    shared_lines.append("_G.Instance = Instance")
+    shared_lines.append("_G.game = game")
+    shared_lines.append("_G.workspace = workspace")
+    shared_lines.append("_G.Vector3 = Vector3")
+    shared_lines.append("_G.CFrame = CFrame")
+    shared_lines.append("_G.Color3 = Color3")
+    shared_lines.append("_G.UDim2 = UDim2")
+    shared_lines.append("_G.require = require")
+    shared_lines.append("_G.print = print")
+    shared_lines.append("_G.warn = warn")
+    shared_lines.append("_G.math = math")
+    shared_lines.append("_G.string = string")
+    shared_lines.append("_G.table = table")
+    shared_lines.append("_G.buffer = buffer")
+    shared_lines.append("_G.bit32 = bit32")
+    shared_lines.append("")
 
     shared_lines.append("return S")
 
@@ -262,17 +301,55 @@ def build_run_luau(main_address_int, main_address_str, chunk_count):
         f"-- Set PC to entry point ({main_address_str})",
         f"local PC = {main_address_int}",
         "",
-        "-- Main dispatch loop",
+        "-- Main dispatch loop with yield protection (same pattern as dispatch_thread)",
+        "local tracePath = {}",
+        "",
+        "-- Per-main-thread register backup for yield recovery",
+        "local _mainReg = table.create(32, 0)",
+        "local _mainFreg = table.create(32, 0)",
+        "for _i = 1, 32 do",
+        "    _mainReg[_i] = S.reg[_i]",
+        "    _mainFreg[_i] = S.freg[_i]",
+        "end",
+        "",
         "while PC and PC ~= 0 do",
+        "    table.insert(tracePath, PC)",
+        "",
+        "    -- Restore main thread registers before each instruction",
+        "    -- (after a yield, spawned threads may have overwritten S.reg/S.freg)",
+        "    for _i = 1, 32 do",
+        "        S.reg[_i] = _mainReg[_i]",
+        "        S.freg[_i] = _mainFreg[_i]",
+        "    end",
+        "",
         "    local handler = S.HANDLERS[PC]",
         "    if not handler then",
         "        print('VM Halt: No handler for PC 0x' .. string.format('%x', PC))",
         "        break",
         "    end",
+        "",
+        "    -- Snapshot generation counter to detect if we yielded",
+        "    local _preGen = S._vm_gen",
         "    PC = handler()",
+        "",
+        "    -- Only save if no other thread ran during our handler",
+        "    -- (if another thread ran, S.reg was corrupted — skip save)",
+        "    if S._vm_gen == _preGen then",
+        "        for _i = 1, 32 do",
+        "            _mainReg[_i] = S.reg[_i]",
+        "            _mainFreg[_i] = S.freg[_i]",
+        "        end",
+        "    end",
         "end",
         "",
-        f'print("VM exited. PC=0x{main_address_str}")',
+        f'print("VM exited. PC={main_address_str}")',
+        'print("Trace (last 100): ")',
+        "local toPrint = #tracePath - 100",
+        "for i, path in pairs(tracePath) do",
+        '    if i > toPrint then',
+        '        print("Trace path: " .. tostring(i) .. " at: " .. string.format("%X", path))',
+        "    end",
+        "end",
     ])
 
     return "\n".join(run_lines)

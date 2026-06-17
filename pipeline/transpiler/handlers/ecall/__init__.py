@@ -3,12 +3,20 @@
 import re
 
 from ._helpers import (
-    _emit_new_part, _emit_find_child, _emit_getprop,
-    _emit_getprop_vec3, _emit_setprop_vec3,
-    _emit_getprop_color3, _emit_setprop_color3,
-    _emit_getprop_cframe, _emit_setprop_cframe,
-    _emit_malloc, _emit_generic_callmethod,
-    _emit_callmethod_return, _emit_runtime_callmethod,
+    _emit_malloc,
+    _emit_generic_callmethod,
+    _emit_callmethod_return,
+    _emit_runtime_callmethod,
+    _emit_struct_read_vec3, _emit_struct_write_vec3,
+    _emit_struct_read_cframe, _emit_struct_write_cframe,
+    _emit_struct_read_color3, _emit_struct_write_color3,
+    _emit_struct_read_udim2, _emit_struct_write_udim2,
+)
+from .convert import (
+    emit_from_float, emit_to_float,
+    emit_from_int, emit_to_int,
+    emit_from_bool, emit_to_bool,
+    emit_from_string, emit_to_string,
 )
 
 
@@ -18,6 +26,7 @@ def _handle_ecall(handler_body, current_func, addr_int,
                   tracked_a3_literal, tracked_a3_rodata_str,
                   tracked_a4_rodata_str, tracked_a5_literal,
                   tracked_a5_rodata_str, tracked_a2_literal,
+                  rodata_addr_table=None,
                   validate=False):
     """Generate ecall handler body based on function context and syscall number."""
 
@@ -25,19 +34,7 @@ def _handle_ecall(handler_body, current_func, addr_int,
     is_print_int = current_func and "printEi" in current_func
     is_print_bool = current_func and "printEb" in current_func
     is_print_float = current_func and "printEf" in current_func
-    is_create_part = current_func and "createPart" in current_func
-    is_find_first_child = current_func and "findFirstChild" in current_func
-    is_wait_for_child = current_func and "waitForChild" in current_func
-    is_destroy = current_func and "destroy" in current_func
-    is_clone = current_func and "clone" in current_func
-    is_getprop_float = current_func and "getPropertyIfEE" in current_func
-    is_setprop_float = current_func and "setPropertyIfEE" in current_func
-    is_getprop_vec3 = current_func and "getPropertyVector3" in current_func
-    is_setprop_vec3 = current_func and "setPropertyVector3" in current_func
-    is_setprop_string = current_func and "setPropertyString" in current_func
-    is_setprop_bool = current_func and "setPropertyBool" in current_func
-    is_getprop_color3 = current_func and "getPropertyColor3" in current_func
-    is_setprop_color3 = current_func and "setPropertyColor3" in current_func
+
     is_create_buffer = current_func and "createBuffer" in current_func
     is_free_buffer = current_func and "freeBuffer" in current_func
     is_buffer_len = current_func and "bufferLen" in current_func
@@ -48,27 +45,51 @@ def _handle_ecall(handler_body, current_func, addr_int,
     is_buffer_read_f32 = current_func and "bufferReadF32" in current_func
     is_buffer_write_f32 = current_func and "bufferWriteF32" in current_func
     is_buffer_from_string = current_func and "bufferFromString" in current_func
+
     is_malloc = current_func and "malloc" in current_func
     is_free = current_func and "free" in current_func
     is_heap_used = current_func and "heapUsed" in current_func
-    is_create_instance = current_func and "createInstance" in current_func
+
     is_get_global = current_func and "getGlobal" in current_func
-    is_get_workspace = current_func and "getWorkspace" in current_func
-    is_get_players = current_func and "getPlayers" in current_func
-    is_get_local_player = current_func and "getLocalPlayer" in current_func
-    is_getprop_cframe = current_func and "getPropertyCFrame" in current_func
-    is_setprop_cframe = current_func and "setPropertyCFrame" in current_func
-    is_task_wait = current_func and "taskWait" in current_func
     is_task_spawn = current_func and "taskSpawn" in current_func
     is_task_defer = current_func and "taskDefer" in current_func
     is_call_method = current_func and "callMethod" in current_func
-    is_get_method = current_func and "getMethod" in current_func
     is_require = current_func and "require" in current_func
+
+    # Primitive type conversions (syscalls 66-73 + legacy a7=0 name-based dispatch)
+    # Dedicated syscall numbers prevent silent failure when the compiler inlines
+    # these small inline-asm functions.
+    is_from_float = current_func and "fromFloat" in current_func
+    is_to_float = current_func and "toFloat" in current_func
+    is_from_int = current_func and "fromInt" in current_func
+    is_to_int = current_func and "toInt" in current_func
+    is_from_bool = current_func and "fromBool" in current_func
+    is_to_bool = current_func and "toBool" in current_func
+    is_from_string = current_func and "fromString" in current_func
+    is_to_string = current_func and "toString" in current_func
 
     ecall_is_halt = False
 
+    # Primitive conversions (checked before any syscall dispatch)
+    if is_from_float or tracked_a7_syscall == 66:
+        emit_from_float(handler_body)
+    elif is_to_float or tracked_a7_syscall == 70:
+        emit_to_float(handler_body)
+    elif is_from_int or tracked_a7_syscall == 67:
+        emit_from_int(handler_body)
+    elif is_to_int or tracked_a7_syscall == 71:
+        emit_to_int(handler_body)
+    elif is_from_bool or tracked_a7_syscall == 68:
+        emit_from_bool(handler_body)
+    elif is_to_bool or tracked_a7_syscall == 72:
+        emit_to_bool(handler_body)
+    elif is_from_string or tracked_a7_syscall == 69:
+        emit_from_string(handler_body)
+    elif is_to_string or tracked_a7_syscall == 73:
+        emit_to_string(handler_body)
+
     # Print variants
-    if is_print_str:
+    elif is_print_str:
         handler_body.append("        print(RODATA[reg[11]] or '[string@' .. string.format('0x%x', reg[11]) .. ']')")
     elif is_print_int:
         handler_body.append("        print(reg[11])")
@@ -76,74 +97,6 @@ def _handle_ecall(handler_body, current_func, addr_int,
         handler_body.append("        print(reg[11] ~= 0)")
     elif is_print_float:
         handler_body.append("        print(bits_to_f32(read_mem32(reg[11])))")
-
-    # Object operations
-    elif is_create_part or tracked_a7_syscall == 8:
-        _emit_new_part(handler_body)
-    elif is_create_instance or tracked_a7_syscall == 38:
-        handler_body.append("        local _typeName = RODATA[reg[11]] or 'Part'")
-        handler_body.append("        local _obj = Instance.new(_typeName)")
-        handler_body.append("        _obj.Parent = workspace")
-        handler_body.append("        OBJECTS[S.NEXT_HANDLE] = _obj")
-        handler_body.append("        reg[11] = S.NEXT_HANDLE")
-        handler_body.append("        S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
-    elif is_destroy or tracked_a7_syscall == 15:
-        handler_body.append("        local _obj = OBJECTS[reg[11]]")
-        handler_body.append("        if _obj then")
-        handler_body.append("            _obj:Destroy()")
-        handler_body.append("            OBJECTS[reg[11]] = nil")
-        handler_body.append("        end")
-    elif is_clone or tracked_a7_syscall == 16:
-        handler_body.append("        local _obj = OBJECTS[reg[11]]")
-        handler_body.append("        if _obj then")
-        handler_body.append("            local _cloned = _obj:Clone()")
-        handler_body.append("            OBJECTS[S.NEXT_HANDLE] = _cloned")
-        handler_body.append("            reg[11] = S.NEXT_HANDLE")
-        handler_body.append("            S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
-        handler_body.append("        else")
-        handler_body.append("            reg[11] = 0")
-        handler_body.append("        end")
-    elif is_find_first_child or tracked_a7_syscall == 13:
-        _emit_find_child(handler_body, "FindFirstChild")
-    elif is_wait_for_child or tracked_a7_syscall == 14:
-        _emit_find_child(handler_body, "WaitForChild")
-
-    # Property get/set
-    elif is_getprop_float or tracked_a7_syscall == 9:
-        _emit_getprop(handler_body, "f32_to_bits(_obj[_propName])")
-    elif is_setprop_float or tracked_a7_syscall == 10:
-        handler_body.append("        local _obj = OBJECTS[reg[11]]")
-        handler_body.append("        local _propName = RODATA[reg[12]] or '?'")
-        handler_body.append("        if _obj then")
-        handler_body.append("            _obj[_propName] = bits_to_f32(reg[13])")
-        handler_body.append("        end")
-    elif is_getprop_vec3 or tracked_a7_syscall == 11:
-        _emit_getprop_vec3(handler_body)
-    elif is_setprop_vec3 or tracked_a7_syscall == 12:
-        _emit_setprop_vec3(handler_body)
-    elif is_getprop_color3 or tracked_a7_syscall == 19:
-        _emit_getprop_color3(handler_body)
-    elif is_setprop_color3 or tracked_a7_syscall == 20:
-        _emit_setprop_color3(handler_body)
-    elif is_setprop_string or tracked_a7_syscall == 17:
-        handler_body.append("        local _obj = OBJECTS[reg[11]]")
-        handler_body.append("        local _propName = RODATA[reg[12]] or '?'")
-        handler_body.append("        local _strVal = RODATA[reg[13]] or ''")
-        handler_body.append("        if _obj then")
-        handler_body.append("            _obj[_propName] = _strVal")
-        handler_body.append("        end")
-    elif is_setprop_bool or tracked_a7_syscall == 18:
-        handler_body.append("        local _obj = OBJECTS[reg[11]]")
-        handler_body.append("        local _propName = RODATA[reg[12]] or '?'")
-        handler_body.append("        if _obj then")
-        handler_body.append("            _obj[_propName] = (reg[13] ~= 0)")
-        handler_body.append("        end")
-
-    # CFrame
-    elif is_getprop_cframe or tracked_a7_syscall == 34:
-        _emit_getprop_cframe(handler_body)
-    elif is_setprop_cframe or tracked_a7_syscall == 35:
-        _emit_setprop_cframe(handler_body)
 
     # Buffer operations
     elif is_create_buffer or tracked_a7_syscall == 21:
@@ -200,34 +153,6 @@ def _handle_ecall(handler_body, current_func, addr_int,
     elif is_heap_used or tracked_a7_syscall == 32:
         handler_body.append("        reg[11] = S.HEAP_BRK - 0x81000000")
 
-    # Service lookups
-    elif is_get_workspace or tracked_a7_syscall == 33:
-        handler_body.append("        if not S.WORKSPACE_HANDLE then")
-        handler_body.append("            OBJECTS[S.NEXT_HANDLE] = workspace")
-        handler_body.append("            S.WORKSPACE_HANDLE = S.NEXT_HANDLE")
-        handler_body.append("            S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
-        handler_body.append("        end")
-        handler_body.append("        reg[11] = S.WORKSPACE_HANDLE")
-    elif is_get_players or tracked_a7_syscall == 36:
-        handler_body.append("        if not S.PLAYERS_HANDLE then")
-        handler_body.append('            local _players = game:GetService("Players")')
-        handler_body.append("            OBJECTS[S.NEXT_HANDLE] = _players")
-        handler_body.append("            S.PLAYERS_HANDLE = S.NEXT_HANDLE")
-        handler_body.append("            S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
-        handler_body.append("        end")
-        handler_body.append("        reg[11] = S.PLAYERS_HANDLE")
-    elif is_get_local_player or tracked_a7_syscall == 37:
-        handler_body.append("        local _players = OBJECTS[reg[11]]")
-        handler_body.append("        if _players and not S.LOCAL_PLAYER_HANDLE then")
-        handler_body.append("            local _player = _players.LocalPlayer")
-        handler_body.append("            if _player then")
-        handler_body.append("                OBJECTS[S.NEXT_HANDLE] = _player")
-        handler_body.append("                S.LOCAL_PLAYER_HANDLE = S.NEXT_HANDLE")
-        handler_body.append("                S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
-        handler_body.append("            end")
-        handler_body.append("        end")
-        handler_body.append("        reg[11] = S.LOCAL_PLAYER_HANDLE or 0")
-
     # Math operations
     elif tracked_a7_syscall == 39:
         handler_body.append("        local _ptr = reg[11]")
@@ -242,45 +167,26 @@ def _handle_ecall(handler_body, current_func, addr_int,
         handler_body.append("        local _val = bits_to_f32(read_mem32(_ptr))")
         handler_body.append("        write_mem32(_ptr, f32_to_bits(math.cos(_val)))")
 
-    # Enum operations
+    # Enum ↔ OBJECTS bridge (syscalls 42/43)
+    # Syscall 42: fromEnum(enumIndex) — converts C++ enum index → OBJECTS handle
     elif tracked_a7_syscall == 42:
+        handler_body.append("        local _enumItem = ENUMS[reg[11] + 1]")
+        handler_body.append("        if _enumItem then")
+        handler_body.append("            OBJECTS[S.NEXT_HANDLE] = _enumItem")
+        handler_body.append("            reg[11] = S.NEXT_HANDLE")
+        handler_body.append("            S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
+        handler_body.append("        else")
+        handler_body.append("            warn('[VM] fromEnum: ENUMS[' .. (reg[11] + 1) .. '] is nil (ENUMS table may be empty)')")
+        handler_body.append("            reg[11] = 0")
+        handler_body.append("        end")
+    # Syscall 43: toEnum(handle) — converts OBJECTS handle → C++ enum index
+    elif tracked_a7_syscall == 43:
         handler_body.append("        local _obj = OBJECTS[reg[11]]")
-        handler_body.append("        local _propName = RODATA[reg[12]] or '?'")
-        handler_body.append("        if _obj and _obj[_propName] ~= nil then")
-        handler_body.append("            reg[11] = ENUM_TO_INDEX[_obj[_propName]] or 0")
+        handler_body.append("        if _obj then")
+        handler_body.append("            reg[11] = ENUM_TO_INDEX[_obj] or 0")
         handler_body.append("        else")
         handler_body.append("            reg[11] = 0")
         handler_body.append("        end")
-    elif tracked_a7_syscall == 43:
-        handler_body.append("        local _obj = OBJECTS[reg[11]]")
-        handler_body.append("        local _propName = RODATA[reg[12]] or '?'")
-        handler_body.append("        local _enumItem = ENUMS[reg[13] + 1]")
-        handler_body.append("        if _obj and _enumItem then")
-        handler_body.append("            _obj[_propName] = _enumItem")
-        handler_body.append("        end")
-    elif tracked_a7_syscall == 44:
-        handler_body.append("        local _obj = OBJECTS[reg[11]]")
-        handler_body.append("        local _propName = RODATA[reg[12]] or '?'")
-        handler_body.append("        local _targetObj = OBJECTS[reg[13]]")
-        handler_body.append("        if _obj and _targetObj then")
-        handler_body.append("            _obj[_propName] = _targetObj")
-        handler_body.append("        end")
-
-    # Task
-    elif is_task_wait or tracked_a7_syscall == 45:
-        handler_body.append("        local _duration = bits_to_f32(reg[11])")
-        handler_body.append("")
-        handler_body.append("        -- Save S.reg/S.freg so other threads don't corrupt us during yield")
-        handler_body.append("        local _yr = table.create(32, 0)")
-        handler_body.append("        local _yf = table.create(32, 0)")
-        handler_body.append("        for _i = 1, 32 do _yr[_i] = S.reg[_i]; _yf[_i] = S.freg[_i] end")
-        handler_body.append("")
-        handler_body.append("        local _elapsed = task.wait(_duration)")
-        handler_body.append("")
-        handler_body.append("        -- Restore S.reg/S.freg (other threads may have run)")
-        handler_body.append("        for _i = 1, 32 do S.reg[_i] = _yr[_i]; S.freg[_i] = _yf[_i] end")
-        handler_body.append("")
-        handler_body.append("        reg[11] = f32_to_bits(_elapsed)")
 
     # Thread spawn (syscall 48: taskSpawn)
     elif is_task_spawn or tracked_a7_syscall == 48:
@@ -382,7 +288,7 @@ def _handle_ecall(handler_body, current_func, addr_int,
         handler_body.append("        end")
 
     # getMethod (syscall 51): returns an RBXScriptSignal as an object handle
-    elif is_get_method or tracked_a7_syscall == 51:
+    elif tracked_a7_syscall == 51:
         handler_body.append("        local _obj = OBJECTS[reg[11]]")
         handler_body.append("        local _propName = RODATA[reg[12]] or '?'")
         handler_body.append("        if _obj then")
@@ -392,16 +298,18 @@ def _handle_ecall(handler_body, current_func, addr_int,
         handler_body.append("                reg[11] = S.NEXT_HANDLE")
         handler_body.append("                S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
         handler_body.append("            else")
+        handler_body.append("                warn('[VM] getMethod: property \"' .. _propName .. '\" not found on object')")
         handler_body.append("                reg[11] = 0")
         handler_body.append("            end")
         handler_body.append("        else")
+        handler_body.append("            warn('[VM] getMethod: OBJECTS[' .. reg[11] .. '] is nil')")
         handler_body.append("            reg[11] = 0")
         handler_body.append("        end")
 
-    # Runtime-dispatched callMethod (must be checked before syscall 46 —
-    # the callMethod function may have a7=46, and the runtime dispatcher
-    # is the correct handler for method dispatch inside that function.)
-    elif is_call_method:
+    # Runtime-dispatched callMethod (must be checked before syscall 46)
+    # Only triggers when the ecall IS syscall 46 — prevents catching inlined
+    # ecalls 62/65 from the new callMethod(getPropertyObject→call) architecture.
+    elif is_call_method and tracked_a7_syscall == 46:
         _emit_runtime_callmethod(handler_body)
 
     # Generic callMethod (templated dispatch)
@@ -420,15 +328,18 @@ def _handle_ecall(handler_body, current_func, addr_int,
         handler_body.append("            reg[11] = _cached")
         handler_body.append("        else")
         handler_body.append("            local _svc = game:GetService(_svcName)")
-        handler_body.append("            OBJECTS[S.NEXT_HANDLE] = _svc")
-        handler_body.append("            S.SERVICE_HANDLES[_svcName] = S.NEXT_HANDLE")
-        handler_body.append("            reg[11] = S.NEXT_HANDLE")
-        handler_body.append("            S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
+        handler_body.append("            if _svc then")
+        handler_body.append("                OBJECTS[S.NEXT_HANDLE] = _svc")
+        handler_body.append("                S.SERVICE_HANDLES[_svcName] = S.NEXT_HANDLE")
+        handler_body.append("                reg[11] = S.NEXT_HANDLE")
+        handler_body.append("                S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
+        handler_body.append("            else")
+        handler_body.append("                warn('[VM] getService: service \"' .. _svcName .. '\" not found')")
+        handler_body.append("                reg[11] = 0")
+        handler_body.append("            end")
         handler_body.append("        end")
 
-    # Syscall 53: require — requires a ModuleScript instance, returns handle
-    # Works with any return type (Instance, table, etc.) — stored in OBJECTS
-    # so callMethod can dispatch on it via bracket notation.
+    # Syscall 53: require
     elif is_require or tracked_a7_syscall == 53:
         handler_body.append("        local _obj = OBJECTS[reg[11]]")
         handler_body.append("        if _obj then")
@@ -438,33 +349,147 @@ def _handle_ecall(handler_body, current_func, addr_int,
         handler_body.append("                reg[11] = S.NEXT_HANDLE")
         handler_body.append("                S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
         handler_body.append("            else")
+        handler_body.append("                warn('[VM] require: module returned nil')")
         handler_body.append("                reg[11] = 0")
         handler_body.append("            end")
         handler_body.append("        else")
+        handler_body.append("            warn('[VM] require: OBJECTS[' .. reg[11] .. '] is nil')")
         handler_body.append("            reg[11] = 0")
+        handler_body.append("        end")
+
+    # Struct ↔ OBJECTS table bridge (syscalls 54-61)
+    elif tracked_a7_syscall == 54:
+        _emit_struct_read_vec3(handler_body)
+    elif tracked_a7_syscall == 55:
+        _emit_struct_write_vec3(handler_body)
+    elif tracked_a7_syscall == 56:
+        _emit_struct_read_cframe(handler_body)
+    elif tracked_a7_syscall == 57:
+        _emit_struct_write_cframe(handler_body)
+    elif tracked_a7_syscall == 58:
+        _emit_struct_read_color3(handler_body)
+    elif tracked_a7_syscall == 59:
+        _emit_struct_write_color3(handler_body)
+    elif tracked_a7_syscall == 60:
+        _emit_struct_read_udim2(handler_body)
+    elif tracked_a7_syscall == 61:
+        _emit_struct_write_udim2(handler_body)
+
+    # Syscall 62: getPropertyObject — returns any property as an object handle
+    elif tracked_a7_syscall == 62:
+        handler_body.append("        local _obj = OBJECTS[reg[11]]")
+        handler_body.append("        local _propName = RODATA[reg[12]] or '?'")
+        handler_body.append("        if _obj and _obj[_propName] ~= nil then")
+        handler_body.append("            OBJECTS[S.NEXT_HANDLE] = _obj[_propName]")
+        handler_body.append("            reg[11] = S.NEXT_HANDLE")
+        handler_body.append("            S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
+        handler_body.append("        else")
+        handler_body.append("            if not _obj then warn('[VM] getPropertyObject: OBJECTS[' .. reg[11] .. '] is nil') end")
+        handler_body.append("            reg[11] = 0")
+        handler_body.append("        end")
+
+    # Syscall 63: setPropertyObject — sets a property from an OBJECTS handle
+    elif tracked_a7_syscall == 63:
+        handler_body.append("        local _obj = OBJECTS[reg[11]]")
+        handler_body.append("        local _propName = RODATA[reg[12]] or '?'")
+        handler_body.append("        local _value = OBJECTS[reg[13]]")
+        handler_body.append("        if _obj and _value ~= nil then")
+        handler_body.append("            _obj[_propName] = _value")
+        handler_body.append("        else")
+        handler_body.append("            if not _obj then warn('[VM] setPropertyObject: OBJECTS[' .. reg[11] .. '] is nil') end")
+        handler_body.append("            if not _value then warn('[VM] setPropertyObject: OBJECTS[' .. reg[13] .. '] (value) is nil') end")
+        handler_body.append("        end")
+
+    # Syscall 64: releaseObject — removes an entry from OBJECTS (non-destructive)
+    elif tracked_a7_syscall == 64:
+        handler_body.append("        OBJECTS[reg[11]] = nil")
+
+    # Syscall 65: call(handle, flags, args...) — calls OBJECTS[handle] as a function
+    elif tracked_a7_syscall == 65:
+        handler_body.append("        local _fn = OBJECTS[reg[11]]")
+        handler_body.append("        local _flags = reg[14]")
+        handler_body.append("        if not _fn then")
+        handler_body.append("            warn('[VM] call: OBJECTS[' .. reg[11] .. '] (function) is nil')")
+        handler_body.append("            reg[11] = 0")
+        handler_body.append("        else")
+        handler_body.append("            local _hasReturn = bit32.band(_flags, 1) ~= 0")
+        handler_body.append("            local _returnIsObj = bit32.band(_flags, 2) ~= 0")
+        handler_body.append("            local _returnIsBuffer = bit32.band(_flags, 32) ~= 0")
+        handler_body.append("            local _selfPrepended = bit32.band(_flags, 2097152) ~= 0  -- callMethod prepends self to a1")
+        handler_body.append("            local _arg1IsFn  = bit32.band(_flags, 8192) ~= 0")
+        handler_body.append("            local _arg1IsBuf = bit32.band(_flags, 512) ~= 0")
+        handler_body.append("            local _arg1IsStr = bit32.band(_flags, 8) ~= 0")
+        handler_body.append("            local _arg1IsObj = bit32.band(_flags, 131072) ~= 0")
+        handler_body.append("            local _arg2IsFn  = bit32.band(_flags, 16384) ~= 0")
+        handler_body.append("            local _arg2IsBuf = bit32.band(_flags, 1024) ~= 0")
+        handler_body.append("            local _arg2IsStr = bit32.band(_flags, 16) ~= 0")
+        handler_body.append("            local _arg2IsObj = bit32.band(_flags, 262144) ~= 0")
+        handler_body.append("            local _arg3IsFn  = bit32.band(_flags, 32768) ~= 0")
+        handler_body.append("            local _arg3IsBuf = bit32.band(_flags, 2048) ~= 0")
+        handler_body.append("            local _arg3IsStr = bit32.band(_flags, 64) ~= 0")
+        handler_body.append("            local _arg3IsObj = bit32.band(_flags, 524288) ~= 0")
+        handler_body.append("            local _arg4IsFn  = bit32.band(_flags, 65536) ~= 0")
+        handler_body.append("            local _arg4IsBuf = bit32.band(_flags, 4096) ~= 0")
+        handler_body.append("            local _arg4IsStr = bit32.band(_flags, 128) ~= 0")
+        handler_body.append("            local _arg4IsObj = bit32.band(_flags, 1048576) ~= 0")
+        handler_body.append("            local _args = {}")
+        # When callMethod prepends self, a1 (reg[12]) is the self object and user args shift right
+        handler_body.append("            if _selfPrepended then")
+        handler_body.append("                _args[#_args + 1] = OBJECTS[reg[12]]  -- self (caller object)")
+        handler_body.append("                -- User arg1 at a2 (reg[13]), user arg2 at a4 (reg[15]), user arg3 at a5 (reg[16]), user arg4 at a6 (reg[17])")
+        handler_body.append("                if _arg1IsFn then _args[#_args + 1] = S.get_function(reg[13]) elseif _arg1IsBuf then _args[#_args + 1] = BUFFERS[reg[13]] elseif _arg1IsObj then _args[#_args + 1] = OBJECTS[reg[13]] elseif _arg1IsStr then local _s = RODATA[reg[13]] or ''; _args[#_args + 1] = _s else _args[#_args + 1] = reg[13] end")
+        handler_body.append("                if _arg2IsFn then _args[#_args + 1] = S.get_function(reg[15]) elseif _arg2IsBuf then _args[#_args + 1] = BUFFERS[reg[15]] elseif _arg2IsObj then _args[#_args + 1] = OBJECTS[reg[15]] elseif _arg2IsStr then local _s = RODATA[reg[15]] or ''; _args[#_args + 1] = _s else _args[#_args + 1] = reg[15] end")
+        handler_body.append("                if _arg3IsFn then _args[#_args + 1] = S.get_function(reg[16]) elseif _arg3IsBuf then _args[#_args + 1] = BUFFERS[reg[16]] elseif _arg3IsObj then _args[#_args + 1] = OBJECTS[reg[16]] elseif _arg3IsStr then local _s = RODATA[reg[16]] or ''; _args[#_args + 1] = _s else _args[#_args + 1] = reg[16] end")
+        handler_body.append("                if _arg4IsFn then _args[#_args + 1] = S.get_function(reg[17]) elseif _arg4IsBuf then _args[#_args + 1] = BUFFERS[reg[17]] elseif _arg4IsObj then _args[#_args + 1] = OBJECTS[reg[17]] elseif _arg4IsStr then local _s = RODATA[reg[17]] or ''; _args[#_args + 1] = _s else _args[#_args + 1] = reg[17] end")
+        handler_body.append("            else")
+        handler_body.append("                if _arg1IsFn then _args[#_args + 1] = S.get_function(reg[12]) elseif _arg1IsBuf then _args[#_args + 1] = BUFFERS[reg[12]] elseif _arg1IsObj then _args[#_args + 1] = OBJECTS[reg[12]] elseif _arg1IsStr then local _s = RODATA[reg[12]] or ''; _args[#_args + 1] = _s else if reg[12] ~= 0 then _args[#_args + 1] = reg[12] end end")
+        handler_body.append("                if _arg2IsFn then _args[#_args + 1] = S.get_function(reg[13]) elseif _arg2IsBuf then _args[#_args + 1] = BUFFERS[reg[13]] elseif _arg2IsObj then _args[#_args + 1] = OBJECTS[reg[13]] elseif _arg2IsStr then local _s = RODATA[reg[13]] or ''; _args[#_args + 1] = _s else if reg[13] ~= 0 then _args[#_args + 1] = reg[13] end end")
+        handler_body.append("                if _arg3IsFn then _args[#_args + 1] = S.get_function(reg[15]) elseif _arg3IsBuf then _args[#_args + 1] = BUFFERS[reg[15]] elseif _arg3IsObj then _args[#_args + 1] = OBJECTS[reg[15]] elseif _arg3IsStr then local _s = RODATA[reg[15]] or ''; _args[#_args + 1] = _s else if reg[15] ~= 0 then _args[#_args + 1] = reg[15] end end")
+        handler_body.append("                if _arg4IsFn then _args[#_args + 1] = S.get_function(reg[16]) elseif _arg4IsBuf then _args[#_args + 1] = BUFFERS[reg[16]] elseif _arg4IsObj then _args[#_args + 1] = OBJECTS[reg[16]] elseif _arg4IsStr then local _s = RODATA[reg[16]] or ''; _args[#_args + 1] = _s else if reg[16] ~= 0 then _args[#_args + 1] = reg[16] end end")
+        handler_body.append("            end")
+        handler_body.append("            if not _selfPrepended then")
+        handler_body.append("                -- arg5 (reg[17]=a6): only the 5-arg C++ template passes a real value here.")
+        handler_body.append("                -- 1-4 arg templates zero a6, so skip it to avoid injecting trailing 0 args.")
+        handler_body.append("                if reg[17] ~= 0 then")
+        handler_body.append("                    _args[#_args + 1] = reg[17]")
+        handler_body.append("                end")
+        handler_body.append("            end")
+        handler_body.append("            if _hasReturn then")
+        handler_body.append("                local _r = _fn(table.unpack(_args))")
+        handler_body.append("                if _returnIsBuffer then")
+        handler_body.append("                    BUFFERS[S.NEXT_HANDLE] = _r")
+        handler_body.append("                    reg[11] = S.NEXT_HANDLE")
+        handler_body.append("                    S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
+        handler_body.append("                elseif _returnIsObj then")
+        handler_body.append("                    if _r then")
+        handler_body.append("                        OBJECTS[S.NEXT_HANDLE] = _r")
+        handler_body.append("                        reg[11] = S.NEXT_HANDLE")
+        handler_body.append("                        S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
+        handler_body.append("                    else")
+        handler_body.append("                        reg[11] = 0")
+        handler_body.append("                    end")
+        handler_body.append("                else")
+        handler_body.append("                    reg[11] = _r or 0")
+        handler_body.append("                end")
+        handler_body.append("            else")
+        handler_body.append("                _fn(table.unpack(_args))")
+        handler_body.append("            end")
         handler_body.append("        end")
 
     # Syscall 52: getGlobal(name) — wraps the named Lua global in OBJECTS and returns a handle
     elif is_get_global or tracked_a7_syscall == 52:
-        # Resolve the global name from the rodata string at transpile time
-        _global_name_resolved = None
-        if tracked_a0_literal and len(tracked_a0_literal) >= 2:
-            if tracked_a0_literal[0] == '"' and tracked_a0_literal[-1] == '"':
-                # Strip quotes and unescape to get the raw identifier
-                _inner = tracked_a0_literal[1:-1]
-                _inner = _inner.replace('\\\\', '\\').replace('\\"', '"').replace('\\n', '\n').replace('\\t', '\t')
-                # Only use literal emission if the name is a valid Lua identifier
-                if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', _inner):
-                    _global_name_resolved = _inner
-        if _global_name_resolved:
-            handler_body.append(f"        OBJECTS[S.NEXT_HANDLE] = {_global_name_resolved}")
-            handler_body.append("        reg[11] = S.NEXT_HANDLE")
-            handler_body.append("        S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
-        else:
-            handler_body.append("        local _globalName = RODATA[reg[11]] or '?'")
-            handler_body.append("        OBJECTS[S.NEXT_HANDLE] = _G[_globalName]")
-            handler_body.append("        reg[11] = S.NEXT_HANDLE")
-            handler_body.append("        S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
+        # getGlobal is a SHARED function called from multiple call sites with
+        # different arguments. Compile-time resolution (via state tracker) only
+        # captures the last call site's value, so we MUST use runtime RODATA lookup.
+        # The _G mirror in shared.luau (e.g. _G.task = task) ensures _G[name]
+        # works even for Roblox built-in globals.
+        handler_body.append("        local _globalName = RODATA[reg[11]] or '?'")
+        handler_body.append("        OBJECTS[S.NEXT_HANDLE] = _G[_globalName]")
+        handler_body.append("        if OBJECTS[S.NEXT_HANDLE] == nil then")
+        handler_body.append("            warn('[VM] getGlobal: could not resolve global \"' .. _globalName .. '\" — add _G.' .. _globalName .. ' = ' .. _globalName .. ' to shared.luau')")
+        handler_body.append("        end")
+        handler_body.append("        reg[11] = S.NEXT_HANDLE")
+        handler_body.append("        S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
 
     # Generic print (syscalls 4-7) — dynamic lookups so inlined code
     # works even when transpile-time literal tracking loses context.

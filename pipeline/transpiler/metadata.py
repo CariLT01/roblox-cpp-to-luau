@@ -13,7 +13,7 @@ def parse_enums():
     Returns list of Lua lines for the ENUMS table (sparse)."""
     enum_hpp_index = {}
     try:
-        with open("enums.hpp", "r") as f:
+        with open("pipeline/preprocess/enum/output.hpp", "r") as f:
             in_enum = False
             idx = 0
             for line in f:
@@ -33,7 +33,7 @@ def parse_enums():
         pass
 
     used_indices = set()
-    for src_path in glob.glob("*.cpp") + glob.glob("*.hpp"):
+    for src_path in glob.glob("src/*.cpp") + glob.glob("src/**/*.hpp"):
         try:
             with open(src_path, "r") as f:
                 content = f.read()
@@ -45,19 +45,25 @@ def parse_enums():
             pass
 
     enums_sparse_lines = []
+    enum_to_index_lines = []
     if used_indices and enum_hpp_index:
         try:
-            with open(os.path.join("..", "enum", "data.json"), "r") as f:
+            with open(os.path.join("pipeline", "preprocess", "enum", "data.json"), "r") as f:
                 data_entries = json.load(f)
             for enum_idx in sorted(used_indices):
                 if enum_idx < len(data_entries):
                     enums_sparse_lines.append(
                         f"    S.ENUMS[{enum_idx + 1}] = {data_entries[enum_idx]}"
                     )
+                    # Populate the reverse lookup: ENUM_TO_INDEX maps the Roblox
+                    # EnumItem object → C++ enum index.
+                    enum_to_index_lines.append(
+                        f"    S.ENUM_TO_INDEX[S.ENUMS[{enum_idx + 1}]] = {enum_idx}"
+                    )
         except (FileNotFoundError, json.JSONDecodeError):
             pass
 
-    return enums_sparse_lines
+    return enums_sparse_lines, enum_to_index_lines
 
 
 def parse_rodata_bytes(asm_text):

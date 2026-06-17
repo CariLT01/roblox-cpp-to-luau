@@ -803,7 +803,7 @@ def _emit_callmethod_return(handler_body, return_is_obj, return_is_buffer):
         handler_body.append('            reg[11] = S.NEXT_HANDLE')
         handler_body.append('            S.NEXT_HANDLE = S.NEXT_HANDLE + 1')
     else:
-        handler_body.append('            reg[11] = _r')
+        handler_body.append('            reg[11] = _r or 0')
 
 
 def _emit_runtime_callmethod(handler_body):
@@ -834,7 +834,7 @@ def _emit_runtime_callmethod(handler_body):
     handler_body.append("                        reg[11] = 0")
     handler_body.append("                    end")
     handler_body.append("                else")
-    handler_body.append("                    reg[11] = _r")
+    handler_body.append("                    reg[11] = _r or 0")
     handler_body.append("                end")
     handler_body.append("            else")
     handler_body.append("                _obj[_methodName](_obj, _arg1)")
@@ -1145,11 +1145,11 @@ def _handle_load(handler_body, mnemonic, args, addr_int):
         offset, rs1 = mem_match.group(1), clean_reg(mem_match.group(2))
         addr_expr = f"{rs1} + {offset}"
         if mnemonic == "lw" or mnemonic == "flw":
-            handler_body.append(f"        do local _a = {addr_expr}; local _i = bit32.rshift(_a, 16); local _p = PAGES[_i]; {rd} = _p and buffer.readi32(_p, bit32.band(_a, 0xFFFF)) or 0 end")
+            handler_body.append(f"        do local _a = {addr_expr}; if _a and _a ~= 0 then local _i = bit32.rshift(_a, 16); local _p = PAGES[_i]; {rd} = _p and buffer.readi32(_p, bit32.band(_a, 0xFFFF)) or 0 else {rd} = 0 end end")
         elif mnemonic == "lb":
-            handler_body.append(f"        do local _a = {addr_expr}; local _i = bit32.rshift(_a, 16); local _p = PAGES[_i]; {rd} = _p and buffer.readi8(_p, bit32.band(_a, 0xFFFF)) or 0 end")
+            handler_body.append(f"        do local _a = {addr_expr}; if _a and _a ~= 0 then local _i = bit32.rshift(_a, 16); local _p = PAGES[_i]; {rd} = _p and buffer.readi8(_p, bit32.band(_a, 0xFFFF)) or 0 else {rd} = 0 end end")
         elif mnemonic == "lbu":
-            handler_body.append(f"        do local _a = {addr_expr}; local _i = bit32.rshift(_a, 16); local _p = PAGES[_i]; {rd} = bit32.band(_p and buffer.readi8(_p, bit32.band(_a, 0xFFFF)) or 0, 0xFF) end")
+            handler_body.append(f"        do local _a = {addr_expr}; if _a and _a ~= 0 then local _i = bit32.rshift(_a, 16); local _p = PAGES[_i]; {rd} = bit32.band(_p and buffer.readi8(_p, bit32.band(_a, 0xFFFF)) or 0, 0xFF) else {rd} = 0 end end")
     handler_body.append(f"        return {addr_int + 4}")
 
 
@@ -1160,9 +1160,9 @@ def _handle_store(handler_body, mnemonic, args, addr_int):
         offset, rs1 = mem_match.group(1), clean_reg(mem_match.group(2))
         addr_expr = f"{rs1} + {offset}"
         if mnemonic == "sw" or mnemonic == "fsw":
-            handler_body.append(f"        do local _a = {addr_expr}; local _i = bit32.rshift(_a, 16); local _p = PAGES[_i]; if not _p then _p = buffer.create(65536); PAGES[_i] = _p end; buffer.writei32(_p, bit32.band(_a, 0xFFFF), {rs2}) end")
+            handler_body.append(f"        do local _a = {addr_expr}; if _a and _a ~= 0 then local _i = bit32.rshift(_a, 16); local _p = PAGES[_i]; if not _p then _p = buffer.create(65536); PAGES[_i] = _p end; buffer.writei32(_p, bit32.band(_a, 0xFFFF), {rs2}) end end")
         elif mnemonic == "sb":
-            handler_body.append(f"        do local _a = {addr_expr}; local _i = bit32.rshift(_a, 16); local _p = PAGES[_i]; if not _p then _p = buffer.create(65536); PAGES[_i] = _p end; buffer.writei8(_p, bit32.band(_a, 0xFFFF), {rs2}) end")
+            handler_body.append(f"        do local _a = {addr_expr}; if _a and _a ~= 0 then local _i = bit32.rshift(_a, 16); local _p = PAGES[_i]; if not _p then _p = buffer.create(65536); PAGES[_i] = _p end; buffer.writei8(_p, bit32.band(_a, 0xFFFF), {rs2}) end end")
     handler_body.append(f"        return {addr_int + 4}")
 
 
@@ -1232,3 +1232,4 @@ def _handle_auipc(handler_body, args, addr_int):
     imm = args[1]
     handler_body.append(f"        {rd} = {(addr_int + int(imm, 0) * 4096) & 0xFFFFFFFF}")
     handler_body.append(f"        return {addr_int + 4}")
+

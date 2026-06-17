@@ -1,4 +1,5 @@
 // main.cpp
+#include "lib/crt.hpp"
 #include "lib/math.hpp"
 #include "lib/base64.hpp"
 
@@ -19,11 +20,16 @@ void delay(volatile int count) {
 // as standalone symbols in the assembly for the transpiler.
 __attribute__((noinline))
 void printFunc(int threadId) {
+
+    LuaObj task = (LuaObj) Rbxl::getGlobal("task");
+
+    LuaObj f1f = LuaObj::fromFloat(1.0f);
+
     for (int i = 0; i < 10; i++) {
         Lua::print("Thread");
         Lua::print(threadId);
         Lua::print(i);
-        Lua::taskWait(1.0f);
+        task.callMethodStatic("wait", f1f, RBXL_METHOD_ARG_1_IS_OBJECT_BIT);
     }
 }
 
@@ -36,35 +42,67 @@ int main() {
 
 
 
+    LuaObj task = (LuaObj) Rbxl::getGlobal("task");
         
     Lua::print("The start of the program");
-    Lua::print("Version 3");
+    Lua::print("Version 4");
 
-    LuaObj rs = Rbxl::getService("ReplicatedStorage");
-    LuaObj moduleScript = (LuaObj) rs.findFirstChild("Shared").findFirstChild("Hello");
-    LuaObj module = moduleScript.require();
+    Lua::taskSpawn((void*)printFunc, 1);
+    Lua::taskSpawn((void*)printFunc, 2);
+
+
+    LuaObj rs = (LuaObj) Rbxl::getService("ReplicatedStorage");
+    LuaObj sharedStr = LuaObj::fromString("Shared");
+    LuaObj helloStr = LuaObj::fromString("Hello");
+    LuaObj shared = (LuaObj) rs.callMethod("FindFirstChild", sharedStr, RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT);
+    LuaObj moduleScript = (LuaObj) shared.callMethod("FindFirstChild", helloStr, RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT);
+    LuaObj module = (LuaObj)((LuaObj) Rbxl::getGlobal("require")).call(moduleScript, RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT);
     module.callMethodStatic("Hello", 0);
     Lua::print("Module already called!");
 
 
-    LuaObj workspace = Rbxl::getWorkspace();
-    PartWrapper baseplate = (PartWrapper) workspace.findFirstChild("Baseplate");
+
+
+    LuaObj workspace = (LuaObj) Rbxl::getService("Workspace");
+    LuaObj baseplateStr = LuaObj::fromString("Baseplate");
+    LuaObj baseplate = (LuaObj) workspace.callMethod("FindFirstChild", baseplateStr, RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT);
 
     
+    LuaObj prop = baseplate.getPropertyObject("Position");
+    Vector3 pos = Vector3{};
+    pos.readFromObject(prop.handle());
+
     
+
+    Lua::print("Position:");
+    Lua::print(pos.x);
+    Lua::print(pos.y);
+    Lua::print(pos.z);
+
+    pos.x += 5;
+
+    LuaObj objectLua = LuaObj(pos.toObject());
+    baseplate.setPropertyObject("Position", objectLua);
 
     LuaObj touchedEvent = baseplate.getMethod("Touched");
     touchedEvent.callMethod("Connect", (void*)touchedCallback, RBXL_METHOD_ARG_1_IS_FUNCTION_BIT);
-    
+
+
 
     //Rbxl::taskSpawn(&printFunc);
-    Lua::taskSpawn((void*)printFunc, 1);
-    Lua::taskWait(1.0f);
-    Lua::taskSpawn((void*)printFunc, 2);
+    //Lua::taskSpawn((void*)printFunc, 1);
+    
+    LuaObj o1f = LuaObj::fromFloat(1.0f);
+    LuaObj o2f = LuaObj::fromFloat(2.0f);
+    LuaObj o0f = LuaObj::fromFloat(0.0f);
 
-    Lua::taskWait(2);
+    task.callMethodStatic("wait", o1f, RBXL_METHOD_ARG_1_IS_OBJECT_BIT);
+    //Lua::taskSpawn((void*)printFunc, 2);
+
+    task.callMethodStatic("wait", o2f, RBXL_METHOD_ARG_1_IS_OBJECT_BIT);
     Lua::print("Finished wait! Doing work!");
-    Lua::taskWait(1);
+    
+    task.callMethodStatic("wait", o1f, RBXL_METHOD_ARG_1_IS_OBJECT_BIT);
 
     vector<uint8_t> decoded;
     base64_decode(imageData, decoded);
@@ -123,7 +161,11 @@ int main() {
         Lua::print("Cursor, targetEndCursor");
         Lua::print(cursor);
         Lua::print(targetEndCursor);
-        Lua::taskWait(0.0f);
+        task.callMethodStatic("wait", o0f, RBXL_METHOD_ARG_1_IS_OBJECT_BIT);
+
+        LuaObj instance = (LuaObj)Rbxl::getGlobal("Instance");
+        LuaObj partStr = LuaObj::fromString("Part");
+        LuaObj wedgePartStr = LuaObj::fromString("WedgePart");
 
 
         while (cursor < targetEndCursor) {
@@ -171,48 +213,74 @@ int main() {
             float yP = scale * (1 - (centerY / imgHeight));
             float wP = scale * (width3D / imgWidth);
             float hP = scale * (height3D / imgHeight);
-            float zP = -layerIndex * 2;
+            float zP = -layerIndex * 0.01;
             
+            Lua::print(rotation);
+
             float rad = math::rad(rotation);
-            PartWrapper part;
             bool partCreated = false;
             // Lua::print("Create part");
+            LuaObj part;
             if (shapeType == 0) {
-                part = Rbxl::createPart();
-                part.setPropertyVector3("Size", Vector3(wP, hP, 0.1));
+                part = (LuaObj) instance.callMethodStatic("new", partStr, RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT);
+                Vector3 sizeV3 = Vector3{wP, hP, 0.001};
+                LuaObj sizeObj = (LuaObj)sizeV3.toObject();
+                part.setPropertyObject("Size", sizeObj);
                 CFrame cfRot = cframe_fromEulerAngles(0, 0, rad);
                 CFrame cfPos = CFrame(xP, yP, zP);
                 CFrame cf = cframe_mul(cfPos, cfRot);
-                part.setPropertyCFrame("CFrame", cf);
+                LuaObj cfObj = (LuaObj)cf.toObject();
+                part.setPropertyObject("CFrame", cfObj);
                 partCreated = true;
+                
             } else if (shapeType == 1) {
-                part = Rbxl::createPart();
-                part.setPropertyEnum("Shape", Rbxl::Enum::PARTTYPE_CYLINDER);
-                part.setSize(0.1, wP, hP);
+                part = (LuaObj) instance.callMethodStatic("new", partStr, RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT);
+
+
+
+                part.setPropertyObject("Shape", LuaObj::fromEnum((int)Rbxl::Enum::PARTTYPE_CYLINDER));
+                
+                Vector3 sizeVec = Vector3{0.0001, wP, hP};
+                LuaObj sizeVecObj = (LuaObj)sizeVec.toObject();
+
+                part.setPropertyObject("Size", sizeVecObj);
                 CFrame cfPos = CFrame(xP, yP, zP);
                 CFrame cfRot1 = cframe_fromEulerAngles(0, math::rad(90), math::rad(180));
                 CFrame cfRot2 = cframe_fromEulerAngles(rad, 0, 0);
                 CFrame cf = cframe_mul(cfPos, cframe_mul(cfRot1, cfRot2));
-                part.setPropertyCFrame("CFrame", cf);
+
+                LuaObj cfObj = (LuaObj)cf.toObject();
+                part.setPropertyObject("CFrame", cfObj);
                 partCreated = true;
             } else if (shapeType == 2) {
-                part = Rbxl::createInstance("WedgePart");
-                part.setPropertyVector3("Size", Vector3(0.1, wP, hP));
+                part = (LuaObj) instance.callMethodStatic("new", wedgePartStr, RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT);
+
+                Vector3 sizeVec = Vector3{0.001, wP, hP};
+                LuaObj sizeObj = (LuaObj)sizeVec.toObject();
+
+                part.setPropertyObject("Size", sizeObj);
+
                 CFrame cfPos = CFrame(xP, yP, zP);
                 CFrame cfRot1 = cframe_fromEulerAngles(0, math::rad(90), math::rad(180));
                 CFrame cfRot2 = cframe_fromEulerAngles(rad, 0, 0);
                 CFrame cf = cframe_mul(cfPos, cframe_mul(cfRot1, cfRot2));
-                part.setPropertyCFrame("CFrame", cf);
+                LuaObj cfObj = (LuaObj)cf.toObject();
+                part.setPropertyObject("CFrame", cfObj);
                 partCreated = true;
 
             }
 
             // Lua::print("Part created enter if");
             if (partCreated) {
-                part.setPropertyEnum("Material", Rbxl::Enum::MATERIAL_SMOOTHPLASTIC);
-                part.setPropertyBool("Anchored", true);
-                part.setPropertyInstance("Parent", Rbxl::getWorkspace());
-                part.setPropertyColor3("Color", Color3(colorR / 255.0f, colorG / 255.0f, colorB / 255.0f));
+                part.setPropertyObject("Material", LuaObj::fromEnum((int)Rbxl::Enum::MATERIAL_SMOOTHPLASTIC));
+                
+                LuaObj trueObj = LuaObj::fromBool(true);
+                Color3 c = Color3(colorR / 255.0f, colorG / 255.0f, colorB / 255.0f);
+                LuaObj colorObj = (LuaObj)c.toObject();
+                
+                part.setPropertyObject("Anchored", trueObj);
+                part.setPropertyObject("Parent", workspace);
+                part.setPropertyObject("Color", colorObj);
             } else {
                 Lua::print("No part created. Shape type: ");
                 Lua::print(shapeType);

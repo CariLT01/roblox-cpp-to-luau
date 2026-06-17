@@ -12,7 +12,7 @@ LUA_RESERVED = {
     "assert", "collectgarbage", "dofile", "error", "getfenv", "getmetatable",
     "ipairs", "load", "loadfile", "loadstring", "module", "next", "pairs", "pcall",
     "print", "rawequal", "rawget", "rawlen", "rawset", "require", "select",
-    "setfenv", "setmetatable", "tonumber", "tostring", "type", "unpack", "xpcall",
+    "setfenv", "setmetatable", "tonumber", "tostring", "type", "unpack", "warn", "xpcall",
     "_G", "_VERSION",
     # Luau builtins
     "bit32", "buffer", "task", "typeof", "table", "string", "math", "coroutine",
@@ -37,7 +37,7 @@ LUA_RESERVED = {
     # Roblox constructors
     "new",
     # Roblox Instance methods
-    "Destroy", "Clone", "FindFirstChild", "WaitForChild", "GetComponents",
+    "Destroy", "Clone", "GetComponents",
     "GetService", "GetChildren", "wait",
     # Roblox Instance properties
     "Parent", "LocalPlayer", "X", "Y", "Z", "R", "G", "B",

@@ -40,25 +40,27 @@ SUPPORTED_PARAM_TYPES = {
     "Instance":     ("LuaObj",      "object"),
 }
 
+# Everything is a handle now. All property getters return LuaObj.
 SUPPORTED_RETURN_TYPES = {
-    "float":    ("float",   "float"),
-    "double":   ("float",   "float"),
-    "int":      ("int",     "int"),
-    "int64":    ("int",     "int"),
-    "bool":     ("bool",    "bool"),
-    "string":   ("const char*", "string"),
-    "Content":  ("const char*", "string"),
-    "ContentId":("const char*", "string"),
-    "BinaryString": ("const char*", "string"),
-    "Vector3":  ("Vector3", "vec3"),
-    "Vector2":  ("Vector2", "vec2"),
-    "CFrame":   ("CFrame",  "cframe"),
-    "Color3":   ("Color3",  "color3"),
-    "UDim2":    ("UDim2",   "udim2"),
-    "BrickColor":("int",    "int"),
-    "Ray":      ("Ray",     "ray"),
-    "Rect":     ("Rect",    "rect"),
-    "Instance": ("LuaObj",  "object"),
+    "float":        ("LuaObj", "object"),
+    "double":       ("LuaObj", "object"),
+    "int":          ("LuaObj", "object"),
+    "int64":        ("LuaObj", "object"),
+    "bool":         ("LuaObj", "object"),
+    "string":       ("LuaObj", "object"),
+    "Content":      ("LuaObj", "object"),
+    "ContentId":    ("LuaObj", "object"),
+    "BinaryString": ("LuaObj", "object"),
+    "Vector3":      ("LuaObj", "object"),
+    "Vector2":      ("LuaObj", "object"),
+    "CFrame":       ("LuaObj", "object"),
+    "Color3":       ("LuaObj", "object"),
+    "UDim2":        ("LuaObj", "object"),
+    "BrickColor":   ("LuaObj", "object"),
+    "Ray":          ("LuaObj", "object"),
+    "Rect":         ("LuaObj", "object"),
+    "Instance":     ("LuaObj", "object"),
+    "Enum":         ("LuaObj", "object"),
 }
 
 # Multi-register struct types that CANNOT be passed through callMethod registers
@@ -91,7 +93,7 @@ def classify_param_type(type_name, type_category=""):
     """Return (cpp_type, tag) for a parameter type, or None if unsupported."""
     clean = normalize_type_name(type_name)
     if type_category == "Enum" or clean in ENUM_TYPE_NAMES:
-        return ("int", "int")
+        return ("LuaObj", "object")
     if type_category == "Class":
         return ("LuaObj", "object")
     if clean in MULTI_REG_PARAM_TYPES:
@@ -105,7 +107,7 @@ def classify_return_type(type_name, type_category=""):
     """Return (cpp_type, tag) for a return type, or None if unsupported."""
     clean = normalize_type_name(type_name)
     if type_category == "Enum" or clean in ENUM_TYPE_NAMES:
-        return ("int", "int")
+        return ("LuaObj", "object")
     if type_category == "Class":
         return (safe_cpp_name(clean), "object")  # specific class, not generic LuaObj
     if clean in UNSUPPORTED_CONTAINER_TYPES:
@@ -260,8 +262,9 @@ def analyze_function(func, is_static=False):
 
     # Build flags for syscall 46
     # arg string bits: arg1=3, arg2=4, arg3=6, arg4=7
-    # arg buffer bits: arg1=9, arg2=10, arg3=11, arg4=12
+    # arg object bits: arg1=17, arg2=18, arg3=19, arg4=20
     arg_string_bits = [3, 4, 6, 7]
+    arg_object_bits = [17, 18, 19, 20]
 
     flags = 0
     if has_return:
@@ -278,6 +281,8 @@ def analyze_function(func, is_static=False):
             break
         if pi["tag"] == "string":
             flags |= (1 << arg_string_bits[i])
+        if pi["tag"] == "object":
+            flags |= (1 << arg_object_bits[i])
 
     # Build C++ signature
     cpp_params = [f"{pi['cpp_type']} {safe_cpp_name(pi['name'])}" for pi in param_infos]
@@ -325,6 +330,10 @@ def flags_to_macro_expr(flags):
         14: "RBXL_METHOD_ARG_2_IS_FUNCTION_BIT",
         15: "RBXL_METHOD_ARG_3_IS_FUNCTION_BIT",
         16: "RBXL_METHOD_ARG_4_IS_FUNCTION_BIT",
+        17: "RBXL_METHOD_ARG_1_IS_OBJECT_BIT",
+        18: "RBXL_METHOD_ARG_2_IS_OBJECT_BIT",
+        19: "RBXL_METHOD_ARG_3_IS_OBJECT_BIT",
+        20: "RBXL_METHOD_ARG_4_IS_OBJECT_BIT",
     }
     parts = []
     for bit, macro in sorted(FLAG_BIT_MACROS.items()):
@@ -429,25 +438,8 @@ def generate_class(cls_name, class_data, class_map, unimpl_dedup):
         if cpp_name and cpp_name[0].isupper():
             cpp_name = cpp_name[0].lower() + cpp_name[1:]
 
-        tag = getter[1]
-        if tag == "float":
-            lines.append(f"    float get_{cpp_name}() const {{ return getPropertyFloat(\"{p_name}\"); }}")
-        elif tag == "vec3":
-            lines.append(f"    Vector3 get_{cpp_name}() const {{ return getPropertyVector3(\"{p_name}\"); }}")
-        elif tag == "color3":
-            lines.append(f"    Color3 get_{cpp_name}() const {{ return getPropertyColor3(\"{p_name}\"); }}")
-        elif tag == "cframe":
-            lines.append(f"    CFrame get_{cpp_name}() const {{ return getPropertyCFrame(\"{p_name}\"); }}")
-        elif tag == "int":
-            lines.append(f"    // TODO: get_{cpp_name}() — int property (no getPropertyInt syscall yet)")
-        elif tag == "bool":
-            lines.append(f"    // TODO: get_{cpp_name}() — bool property (no getPropertyBool syscall yet)")
-        elif tag == "string":
-            lines.append(f"    // TODO: get_{cpp_name}() — string property (no getPropertyString syscall yet)")
-        elif tag == "object":
-            lines.append(f"    // TODO: get_{cpp_name}() — Instance property (no getPropertyInstance syscall yet)")
-        else:
-            lines.append(f"    // TODO: get_{cpp_name}() — {vtype_name} property (not yet supported)")
+        # Everything is a handle — all property getters use getPropertyObject
+        lines.append(f"    LuaObj get_{cpp_name}() const {{ return getPropertyObject(\"{p_name}\"); }}")
 
     lines.append("};")
     lines.append("")
@@ -532,22 +524,19 @@ def generate_bindings(api_dump_path, output_dir):
         f.write("}\n\n")
 
         # Forward declarations
-        f.write("// LuaObj property helpers not in base rbxl.hpp — added here for generated bindings\n")
-        f.write("// These use the same syscall conventions as the existing Instance methods.\n")
-        f.write("/* Example usage of raw property access on any LuaObj:\n")
-        f.write("   getPropertyFloat(name)        — syscall 9\n")
-        f.write("   setPropertyFloat(name, val)   — syscall 10\n")
-        f.write("   getPropertyVector3(name)      — syscall 11\n")
-        f.write("   setPropertyVector3(name, v)   — syscall 12\n")
-        f.write("   findFirstChild(name)          — syscall 13\n")
-        f.write("   waitForChild(name)            — syscall 14\n")
-        f.write("   destroy()                     — syscall 15\n")
-        f.write("   clone()                       — syscall 16\n")
-        f.write("   setPropertyString(name, val)  — syscall 17\n")
-        f.write("   setPropertyBool(name, val)    — syscall 18\n")
-        f.write("   getPropertyColor3(name)       — syscall 19\n")
-        f.write("   setPropertyColor3(name, c)    — syscall 20\n")
-        f.write("   callMethod(name, args, flags) — syscall 46\n")
+        f.write("// LuaObj API (defined in rbxl.hpp):\n")
+        f.write("//   getPropertyObject(name)       — returns handle for ANY property\n")
+        f.write("//   setPropertyObject(name, val)  — sets property from a handle\n")
+        f.write("//   callMethod(name, args, flags) — syscall 46\n")
+        f.write("//   getService(name)              — syscall 47\n")
+        f.write("//   getGlobal(name)               — syscall 52\n")
+        f.write("//   getMethod(name)               — syscall 51\n")
+        f.write("//   require()                     — syscall 53\n")
+        f.write("//   release()                     — syscall 64\n")
+        f.write("//\n")
+        f.write("// Struct bridge (on Vector3, CFrame, Color3, UDim2):\n")
+        f.write("//   readFromObject(handle)        — syscalls 54/56/58/60\n")
+        f.write("//   toObject()                    — syscalls 55/57/59/61\n")
         f.write("*/\n\n")
         f.write("// Forward declarations\n")
         for cls_name in sorted_classes:
