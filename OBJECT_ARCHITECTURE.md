@@ -199,56 +199,101 @@ This dual detection (syscall number + function name) prevents silent failure whe
 
 ---
 
-## 4. Method Call Architecture (syscall 65)
+## 4. Method Call Architecture
 
-### 4.1 The New Call API
+### 4.1 Two Call Paths
 
-In the universal handle architecture, **all method calls go through syscall 65**. The older syscall 46 path still exists for backward compatibility but is no longer the primary mechanism.
+There are two parallel call paths, selected by the caller:
 
-```
-callMethod / callMethodStatic  →  getPropertyObject (syscall 62)  →  .call() (syscall 65)
-```
+| Path | Syscall | C++ function | Used by |
+|------|---------|-------------|---------|
+| **Payload stack** | 75 | `Rbxl::callObj()` / `LuaObj::callObj()` | All non-Buffer calls (Instances, services, modules) |
+| **Register-based** | 65 | `Rbxl::call()` | Buffer operations only (raw int passthrough) |
 
-The flow for `instance.callMethodStatic("new", partStr, flags)`:
+The payload path is the primary API. The register path is retained solely for Buffer operations that pass raw integer arguments that cannot be OBJECTS handles.
 
-1. `getPropertyObject("new")` → syscall 62 → returns the `new` method as an OBJECTS handle
-2. `.call(partStr, flags | IS_STATIC)` → syscall 65 → invokes `OBJECTS[methodHandle](partStr)`
+### 4.2 Payload Stack Call (syscall 75)
 
-### 4.2 The Flag System
+All args are **OBJECTS handles** — no raw ints, no strings, no function addresses. Self-prepend for `callMethod` is handled by including `this->h` as the first user arg.
 
-Method calls use a **21-bit flag field** that tells the transpiler exactly how to marshal arguments:
-
-| Bit | Value | Name | Meaning |
-|-----|-------|------|---------|
-| 0 | 1 | `HAS_RETURN` | Method returns a value |
-| 1 | 2 | `RETURN_IS_OBJ` | Return value goes into OBJECTS |
-| 2 | 4 | `IS_SERVICE` | Call target is a service (arg handling differs) |
-| 3 | 8 | `ARG1_IS_STRING` | Arg 1: dereference RODATA for string |
-| 4 | 16 | `ARG2_IS_STRING` | Arg 2: dereference RODATA for string |
-| 5 | 32 | `RETURN_IS_BUFFER` | Return value goes into OBJECTS (legacy: was BUFFERS) |
-| 6 | 64 | `ARG3_IS_STRING` | Arg 3: dereference RODATA for string |
-| 7 | 128 | `ARG4_IS_STRING` | Arg 4: dereference RODATA for string |
-| 8 | 256 | `IS_STATIC` | Use `.` syntax (no implicit `self`) |
-| 9 | 512 | `ARG1_IS_BUFFER` | Arg 1: dereference OBJECTS (legacy: was BUFFERS) |
-| 10 | 1024 | `ARG2_IS_BUFFER` | Arg 2: dereference OBJECTS (legacy: was BUFFERS) |
-| 11 | 2048 | `ARG3_IS_BUFFER` | Arg 3: dereference OBJECTS (legacy: was BUFFERS) |
-| 12 | 4096 | `ARG4_IS_BUFFER` | Arg 4: dereference OBJECTS (legacy: was BUFFERS) |
-| 13 | 8192 | `ARG1_IS_FUNCTION` | Arg 1: wrap as callable Luau thunk via S.get_function |
-| 14 | 16384 | `ARG2_IS_FUNCTION` | Arg 2: wrap as callable Luau thunk |
-| 15 | 32768 | `ARG3_IS_FUNCTION` | Arg 3: wrap as callable Luau thunk |
-| 16 | 65536 | `ARG4_IS_FUNCTION` | Arg 4: wrap as callable Luau thunk |
-| 17 | 131072 | `ARG1_IS_OBJECT` | Arg 1: dereference OBJECTS |
-| 18 | 262144 | `ARG2_IS_OBJECT` | Arg 2: dereference OBJECTS |
-| 19 | 524288 | `ARG3_IS_OBJECT` | Arg 3: dereference OBJECTS |
-| 20 | 1048576 | `ARG4_IS_OBJECT` | Arg 4: dereference OBJECTS |
-| 21 | 2097152 | `ARG0_IS_SELF` | callMethod prepends self; a1=self, user args start at a2 |
-
-> **Note:** `IS_BUFFER` bits (5, 9-12) are now aliases for `IS_OBJECT` — buffers and objects both live in `S.OBJECTS`. The handler merges `_argNIsBuf` into `_argNIsHandle` via combined bitmasks (e.g., `_arg1IsHandle = bit32.band(_flags, 131584) ~= 0` checks both `IS_OBJECT` (131072) and `IS_BUFFER` (512)).
-
-### 4.3 Register Layout for syscall 65
+**Payload format** (stack-local struct, passed by pointer in a0):
 
 ```
-a0 (reg[11]) = callable handle  (OBJECTS[a0] is the function/method to call)
+┌────────────────────────┐
+│  word 0: header         │  = (handleCount << 16) | (flags & 0xFFFF)
+│  word 1: fn handle      │  = OBJECTS index of the function/method
+│  word 2: arg 0 handle   │  = OBJECTS index of first argument
+│  ...                    │
+│  word N+1: arg N handle │
+└────────────────────────┘
+
+handleCount = number of USER args (NOT including fn handle)
+flags       = return type flags (bits 0-1 only)
+```
+
+**C++ side** — `Rbxl::callObj()` templates (0-5 args):
+
+```cpp
+template<typename A1>
+void* callObj(void* fnHandle, int flags, const A1& a1) {
+    struct _Payload1 { unsigned int header; void* fn; void* a[1]; };
+    _Payload1 _p;
+    _p.header = (1 << 16) | (flags & 0xFFFF);  // count = 1 user arg
+    _p.fn = fnHandle;
+    _p.a[0] = _obj_handle(a1);  // extracts void* from LuaObj or passes void* through
+
+    void* result;
+    asm volatile("mv a0, %1; li a7, 75; ecall; mv %0, a0"
+        : "=r"(result) : "r"(&_p) : "a0", "a7", "memory");
+    return result;
+}
+```
+
+The `_obj_handle()` helper automatically extracts `void*` from `LuaObj` arguments or passes `void*` through unchanged.
+
+**Luau handler** (syscall 75):
+
+```lua
+local _payload = reg[11]                              -- a0 = pointer to payload
+local _header = read_mem32(_payload)                  -- word 0
+local _handleCount = bit32.rshift(_header, 16)        -- number of user args
+local _flags = bit32.band(_header, 0xFFFF)            -- return type flags
+
+local _fn = OBJECTS[read_mem32(_payload + 4)]        -- word 1 = fn handle
+
+local _args = {}
+for _i = 0, _handleCount - 1 do                       -- words 2..N+1 = arg handles
+    local _h = read_mem32(_payload + 8 + _i * 4)
+    _args[_i + 1] = OBJECTS[_h]
+end
+
+local _hasReturn = bit32.band(_flags, 1) ~= 0
+local _returnIsObj = bit32.band(_flags, 2) ~= 0
+
+if _hasReturn then
+    local _r = _fn(table.unpack(_args))
+    if _returnIsObj then
+        OBJECTS[S.NEXT_HANDLE] = _r; reg[11] = S.NEXT_HANDLE; S.NEXT_HANDLE += 1
+    else
+        reg[11] = _r or 0
+    end
+else
+    _fn(table.unpack(_args))
+end
+```
+
+**Key properties:**
+- **No sentinel guards** — the count in the header tells the handler exactly how many args to read
+- **No arg-type flags** — every arg is an OBJECTS handle, no bit-twiddling needed
+- **No self-prepend flag** — `callMethod` simply includes `this->h` as the first user arg
+- **N-arg ready** — the payload layout naturally supports any number of args
+
+### 4.3 Register-Based Call (syscall 65) — Buffer Only
+
+The original register-based path remains for Buffer operations that pass raw integers:
+
+```
+a0 (reg[11]) = callable handle
 a1 (reg[12]) = arg 1
 a2 (reg[13]) = arg 2
 a3 (reg[14]) = flags
@@ -257,60 +302,53 @@ a5 (reg[16]) = arg 4
 a6 (reg[17]) = arg 5
 ```
 
-When `ARG0_IS_SELF` is set (callMethod), the handler prepends `OBJECTS[reg[12]]` as self and shifts user args right by one register position.
+Buffer code calls `Rbxl::call()` directly (bypassing `LuaObj::callMethodStatic()`):
 
-### 4.4 Sentinel Guards for Unused Arguments
+```cpp
+// Buffer::readFromObject:
+Rbxl::call(
+    bufferLib.getPropertyObject("len").handle(),  // method handle
+    objHandle,                                      // arg1 (OBJECTS handle)
+    RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT
+);
 
-The C++ `Rbxl::call` templates are overloaded for 0-5 extra args. Fewer-arg templates set unused registers to a sentinel value so the Luau handler can skip them:
-
-```asm
-# 1-arg template: a2, a4, a5, a6 are unused
-addi a2, x0, -1      # sentinel = 0xFFFFFFFF
-addi a4, x0, -1
-addi a5, x0, -1
-addi a6, x0, -1
+// Buffer::toObject:
+Rbxl::call(
+    bufferLib.getPropertyObject("writei8").handle(),
+    handle, (int)i, (int)data[i],                   // raw int args!
+    RBXL_METHOD_ARG_1_IS_OBJECT_BIT
+);
 ```
 
-On the Luau side, the ALU generator wraps arithmetic with `bit32.band(..., 0xFFFFFFFF)`, so `addi a2, x0, -1` becomes:
+The syscall 65 handler continues to use the full flag system for arg-type resolution and sentinel guards for unused register slots. This complexity is contained entirely within the Buffer codepath.
 
-```lua
-reg[13] = bit32.band(reg[1] + (-1), 0xFFFFFFFF)  -- = 4294967295
+### 4.4 API Surface
+
+**`LuaObj` methods for non-Buffer callers:**
+
+```cpp
+// Direct call: this->h IS the function handle
+obj.callObj(flags)                 // 0 args
+obj.callObj(flags, a1)             // 1 arg
+
+// Legacy .call() wrapper (flags-last, delegates to callObj)
+obj.call(flags)                    // 0 args
+obj.call(a1, flags)                // 1 arg
+
+// Method call: prepends self (this->h) automatically
+obj.callMethod("MethodName", flags)       // 0 user args
+obj.callMethod("MethodName", flags, a1)   // 1 user arg
+
+// Static method call: no self prepend
+obj.callMethodStatic("MethodName", flags)       // 0 user args
+obj.callMethodStatic("MethodName", flags, a1)   // 1 user arg
 ```
 
-The handler guards raw integer arguments with:
-
-```lua
-if reg[13] ~= 4294967295 then
-    _args[#_args + 1] = reg[13]
-end
-```
-
-This correctly distinguishes:
-- **`Instance.new(partStr)`** (1-arg template): arg2-arg5 = 4294967295 → skipped ✓
-- **`writei8(buf, 0, val)`** (3-arg template): arg2=0, arg3=val → passed through ✓
+Note: `callMethod`/`callMethodStatic` use **flags-first** API. The legacy `.call()` keeps flags-last for backward compatibility.
 
 ### 4.5 Function Pointer Wrappers
 
-When `argNIsFunction` is set, the transpiler wraps the raw integer function address into a callable Luau closure:
-
-```lua
-function S.get_function(addr)
-    local _cached = S._FUNC_WRAPPERS[addr]
-    if _cached then return _cached end
-    local _wrapper = function(...)
-        -- Save parent VM state
-        -- Pack callback args into RISC-V registers
-        -- Dispatch thread at 'addr'
-        -- Restore parent VM state
-    end
-    S._FUNC_WRAPPERS[addr] = _wrapper
-    return _wrapper
-end
-```
-
-This allows passing C++ function pointers as callbacks to Roblox events (e.g., `part.Touched:Connect(myHandler)`).
-
-With the universal handle API, functions are also accessible through `LuaObj::fromFunction(void* funcAddr)` (syscall 74), which wraps the function, stores it in OBJECTS, and returns a handle — making function pointers just another handle type.
+Functions are stored in OBJECTS via `LuaObj::fromFunction(void* funcAddr)` (syscall 74), which wraps the C++ address in a callable Luau closure and returns a handle. This handle can then be passed through the payload-stack call path just like any other OBJECTS handle.
 
 ---
 
@@ -722,8 +760,17 @@ Same mechanism as taskSpawn but uses `task.defer()` instead, scheduling executio
 | 62 | getPropertyObject | a0=handle, a1=name_ptr | a0=handle |
 | 63 | setPropertyObject | a0=handle, a1=name_ptr, a2=valueHandle | — |
 | 64 | releaseObject | a0=handle | — |
-| 65 | **call** | a0=handle, a1=arg1, a2=arg2, a3=flags, a4=arg3, a5=arg4, a6=arg5 | a0=result |
+| 65 | call (register) | a0=handle, a1=arg1, a2=arg2, a3=flags, a4=arg3, a5=arg4, a6=arg5 | a0=result |
 | 66 | fromFloat | a0=float | a0=handle |
+| 67 | fromInt | a0=int | a0=handle |
+| 68 | fromBool | a0=int(bool) | a0=handle |
+| 69 | fromString | a0=str_ptr | a0=handle |
+| 70 | toFloat | a0=handle | a0=float |
+| 71 | toInt | a0=handle | a0=int |
+| 72 | toBool | a0=handle | a0=int(bool) |
+| 73 | toString | a0=handle | a0=str_ptr |
+| 74 | fromFunction | a0=funcAddr | a0=handle |
+| **75** | **callObj (payload)** | **a0=payloadPtr → {header, fn, args...}** | **a0=result** |
 | 67 | fromInt | a0=int | a0=handle |
 | 68 | fromBool | a0=int(bool) | a0=handle |
 | 69 | fromString | a0=str_ptr | a0=handle |

@@ -16,6 +16,11 @@
 #include "enums.hpp"
 
 // ── callMethod flags ─────────────────────────────────────────────────────────
+//
+// These flags serve two different syscalls:
+//   syscall 65 (register-based, used by Buffer): uses ALL flag bits
+//   syscall 75 (payload-based, used by LuaObj): only uses bits 0-1 (return type)
+//
 #define RBXL_METHOD_HAS_RETURN_BIT            (1 << 0)
 #define RBXL_METHOD_RETURN_IS_OBJ_BIT         (1 << 1)
 #define RBXL_METHOD_CALL_TARGET_IS_SERVICE_BIT (1 << 2)
@@ -346,10 +351,11 @@ namespace Rbxl {
         return handle;
     }
 
-    // Syscall 65: call(handle, flags, args...) — calls OBJECTS[handle] as a function
-    // Register layout: a0=handle, a1=arg1, a2=arg2, a3=flags, a4=arg3, a5=arg4, a6=arg5
+        // ── Syscall 65: register-based call (used by Buffer for raw-int passthrough) ──
+    // Kept for Buffer operations that need to pass raw integers (offsets, sizes).
+    // All other call sites should use callObj (syscall 75) instead.
 
-    // 0 extra args — set unused arg regs to -1 sentinel so the handler can skip them
+    // 0 extra args
     void* call(void* handle, int flags) {
         void* result = nullptr;
         asm volatile (
@@ -360,7 +366,7 @@ namespace Rbxl {
         return result;
     }
 
-    // 1 extra arg — set unused a2, a4, a5, a6 to -1 sentinel
+    // 1 extra arg
     template<typename A1>
     void* call(void* handle, const A1& a1, int flags) {
         void* result = nullptr;
@@ -372,7 +378,7 @@ namespace Rbxl {
         return result;
     }
 
-    // 2 extra args — set unused a4, a5, a6 to -1 sentinel
+    // 2 extra args
     template<typename A1, typename A2>
     void* call(void* handle, const A1& a1, const A2& a2, int flags) {
         void* result = nullptr;
@@ -384,7 +390,7 @@ namespace Rbxl {
         return result;
     }
 
-    // 3 extra args — set unused a5, a6 to -1 sentinel
+    // 3 extra args
     template<typename A1, typename A2, typename A3>
     void* call(void* handle, const A1& a1, const A2& a2, const A3& a3, int flags) {
         void* result = nullptr;
@@ -396,70 +402,40 @@ namespace Rbxl {
         return result;
     }
 
-    // 4 extra args — set unused a6 to -1 sentinel
-    template<typename A1, typename A2, typename A3, typename A4>
-    void* call(void* handle, const A1& a1, const A2& a2, const A3& a3, const A4& a4, int flags) {
-        void* result = nullptr;
-        asm volatile (
-            "mv a0, %1; mv a1, %2; mv a2, %3; mv a3, %6; mv a4, %4; mv a5, %5; addi a6, x0, -1; li a7, 65; ecall; mv %0, a0"
-            : "=r"(result) : "r"(handle), "r"(a1), "r"(a2), "r"(a3), "r"(a4), "r"(flags)
-            : "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7"
-        );
-        return result;
-    }
+    // ── Syscall 75: payload-stack call — all args are OBJECTS handles ──
+    // Writes (count<<16|flags, fnHandle, args...) to a stack-local buffer and
+    // passes its address via a0.  The Luau handler reads the payload through
+    // read_mem32 and constructs the call.
+    //
+    // All args MUST be void* (OBJECTS handles).  Callers with LuaObj args should
+    // use LuaObj::callObj() which extracts handles automatically.
 
-    // 5 extra args (needed by callMethod with 4 user args + self) — all regs used
-    template<typename A1, typename A2, typename A3, typename A4, typename A5>
-    void* call(void* handle, const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, int flags) {
-        void* result = nullptr;
-        asm volatile (
-            "mv a0, %1; mv a1, %2; mv a2, %3; mv a3, %7; mv a4, %4; mv a5, %5; mv a6, %6; li a7, 65; ecall; mv %0, a0"
-            : "=r"(result) : "r"(handle), "r"(a1), "r"(a2), "r"(a3), "r"(a4), "r"(a5), "r"(flags)
-            : "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7"
-        );
+    // Helper: identity for void* (handles); .handle() for LuaObj
+    inline void* _obj_handle(void* h) { return h; }
+    inline void* _obj_handle(const void* h) { return const_cast<void*>(h); }
+    inline void* _obj_handle(const class LuaObj& obj);  // defined after LuaObj
+
+    // Single variadic template — supports any number of OBJECTS handle args.
+    // Uses a stack-local buffer (via __builtin_alloca) and fold expressions
+    // to write header + fn + N handles sequentially.
+    template<typename... Args>
+    void* callObj(void* fnHandle, int flags, const Args&... args) {
+        constexpr int N = sizeof...(Args);
+        const int totalSize = 8 + N * 4;  // header(4) + fn(4) + N handles(4 each)
+
+        unsigned int* p = (unsigned int*)__builtin_alloca(totalSize);
+        p[0] = (((unsigned int)N) << 16) | ((unsigned int)flags & 0xFFFF);
+        p[1] = (unsigned int)(unsigned long)fnHandle;
+        int i = 2;
+        ((p[i++] = (unsigned int)(unsigned long)_obj_handle(args)), ...);
+
+        void* result;
+        asm volatile("mv a0, %1; li a7, 75; ecall; mv %0, a0"
+            : "=r"(result) : "r"(p) : "a0", "a7", "memory");
         return result;
     }
 
 }
-
-// ── Forward declarations of LuaObj-aware call() overloads ──
-// These MUST be visible before LuaObj's member functions so that
-// Rbxl::call(h, luaObj, ...) resolves to these overloads (which extract
-// the inner void* handle) rather than the base templates (which would
-// try to pass the class object through a register constraint).
-
-namespace Rbxl {
-    // -- all-LuaObj (non-template) --
-    inline void* call(void* handle, const LuaObj& a1, int flags);
-    inline void* call(void* handle, const LuaObj& a1, const LuaObj& a2, int flags);
-    inline void* call(void* handle, const LuaObj& a1, const LuaObj& a2, const LuaObj& a3, int flags);
-    inline void* call(void* handle, const LuaObj& a1, const LuaObj& a2, const LuaObj& a3, const LuaObj& a4, int flags);
-    inline void* call(void* handle, const LuaObj& a1, const LuaObj& a2, const LuaObj& a3, const LuaObj& a4, const LuaObj& a5, int flags);
-
-    // -- partial templates (one LuaObj position) --
-    // 2 args
-    template<typename A2> inline void* call(void* handle, const LuaObj& a1, const A2& a2, int flags);
-    template<typename A1> inline void* call(void* handle, const A1& a1, const LuaObj& a2, int flags);
-
-    // 3 args
-    template<typename A2, typename A3> inline void* call(void* handle, const LuaObj& a1, const A2& a2, const A3& a3, int flags);
-    template<typename A1, typename A3> inline void* call(void* handle, const A1& a1, const LuaObj& a2, const A3& a3, int flags);
-    template<typename A1, typename A2> inline void* call(void* handle, const A1& a1, const A2& a2, const LuaObj& a3, int flags);
-
-    // 4 args
-    template<typename A2, typename A3, typename A4> inline void* call(void* handle, const LuaObj& a1, const A2& a2, const A3& a3, const A4& a4, int flags);
-    template<typename A1, typename A3, typename A4> inline void* call(void* handle, const A1& a1, const LuaObj& a2, const A3& a3, const A4& a4, int flags);
-    template<typename A1, typename A2, typename A4> inline void* call(void* handle, const A1& a1, const A2& a2, const LuaObj& a3, const A4& a4, int flags);
-    template<typename A1, typename A2, typename A3> inline void* call(void* handle, const A1& a1, const A2& a2, const A3& a3, const LuaObj& a4, int flags);
-
-    // 5 args
-    template<typename A2, typename A3, typename A4, typename A5> inline void* call(void* handle, const LuaObj& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, int flags);
-    template<typename A1, typename A3, typename A4, typename A5> inline void* call(void* handle, const A1& a1, const LuaObj& a2, const A3& a3, const A4& a4, const A5& a5, int flags);
-    template<typename A1, typename A2, typename A4, typename A5> inline void* call(void* handle, const A1& a1, const A2& a2, const LuaObj& a3, const A4& a4, const A5& a5, int flags);
-    template<typename A1, typename A2, typename A3, typename A5> inline void* call(void* handle, const A1& a1, const A2& a2, const A3& a3, const LuaObj& a4, const A5& a5, int flags);
-    template<typename A1, typename A2, typename A3, typename A4> inline void* call(void* handle, const A1& a1, const A2& a2, const A3& a3, const A4& a4, const LuaObj& a5, int flags);
-}
-
 
 // ── LuaObj: base handle class for ALL Roblox objects ──────────────────────────
 // Everything is a handle. No typed property accessors — use getPropertyObject
@@ -583,107 +559,61 @@ public:
     LuaObj getMethod(const char* methodName) const { return LuaObj(Rbxl::getMethod(h, methodName)); }
     LuaObj require() const                       { return LuaObj(Rbxl::require(h)); }
 
-    // ── .call() — invokes OBJECTS[handle] as a callable function ──
-    // Passes args directly; no implicit self.
-    // callMethod prepends self explicitly; callMethodStatic does not.
+    // ── .callObj() — payload-based call (syscall 75) ──
+    // Invokes OBJECTS[handle] as a callable function.  All args MUST be
+    // OBJECTS handles (void*).  LuaObj args are auto-extracted via _obj_handle().
+    //
+    // For callMethod (self-prepend): pass this->h as the first arg.
+    // For callMethodStatic: omit self.
 
-    // 0 extra args
-    void* call(int flags) const {
-        return Rbxl::call(h, flags);
+    template<typename... Args>
+    void* callObj(int flags, const Args&... args) const {
+        return Rbxl::callObj(h, flags, args...);
     }
-    // 1 extra arg
+
+    // ── Legacy .call() — delegates to callObj() ──
+    // Kept for compatibility.  Flags are passed as the LAST argument matching
+    // the old API shape: obj.call(arg1, arg2, flags).
+
+    void* call(int flags) const {
+        return callObj(flags);
+    }
     template<typename A1>
     void* call(const A1& a1, int flags) const {
-        return Rbxl::call(h, a1, flags);
+        return callObj(flags, a1);
     }
-    // 2 extra args
     template<typename A1, typename A2>
     void* call(const A1& a1, const A2& a2, int flags) const {
-        return Rbxl::call(h, a1, a2, flags);
+        return callObj(flags, a1, a2);
     }
-    // 3 extra args
     template<typename A1, typename A2, typename A3>
     void* call(const A1& a1, const A2& a2, const A3& a3, int flags) const {
-        return Rbxl::call(h, a1, a2, a3, flags);
+        return callObj(flags, a1, a2, a3);
     }
-    // 4 extra args
     template<typename A1, typename A2, typename A3, typename A4>
     void* call(const A1& a1, const A2& a2, const A3& a3, const A4& a4, int flags) const {
-        return Rbxl::call(h, a1, a2, a3, a4, flags);
+        return callObj(flags, a1, a2, a3, a4);
     }
-    // 5 extra args (needed by callMethod with 4 user args + self)
     template<typename A1, typename A2, typename A3, typename A4, typename A5>
     void* call(const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, int flags) const {
-        return Rbxl::call(h, a1, a2, a3, a4, a5, flags);
+        return callObj(flags, a1, a2, a3, a4, a5);
     }
 
-    // ── Method call (getPropertyObject + .call) ──
+    // ── Method call (getPropertyObject + callObj) ──
     // callMethod: prepends self (this->h) as first arg, then user args
     // callMethodStatic: no self prepended
+    // Flags go FIRST in the new API (different from the legacy .call() API).
 
-    // 0 extra args
-    void* callMethod(const char* methodName, int flags) const {
-        return getPropertyObject(methodName).call(h, flags | RBXL_METHOD_ARG_0_IS_SELF_BIT);
-    }
-
-    // 1 extra arg — const char* (exact match, shadows template)
-    void* callMethod(const char* methodName, const char* arg, int flags) const {
-        return getPropertyObject(methodName).call(h, arg, flags | RBXL_METHOD_ARG_0_IS_SELF_BIT);
+    template<typename... Args>
+    void* callMethod(const char* methodName, int flags, const Args&... args) const {
+        return getPropertyObject(methodName).callObj(flags, h, args...);
     }
 
-    // 1 extra arg (generic template)
-    template<typename A1>
-    void* callMethod(const char* methodName, const A1& a1, int flags) const {
-        return getPropertyObject(methodName).call(h, a1, flags | RBXL_METHOD_ARG_0_IS_SELF_BIT);
-    }
+    // ── Static method call (getPropertyObject + callObj, no self) ──
 
-    // 2 extra args
-    template<typename A1, typename A2>
-    void* callMethod(const char* methodName, const A1& a1, const A2& a2, int flags) const {
-        return getPropertyObject(methodName).call(h, a1, a2, flags | RBXL_METHOD_ARG_0_IS_SELF_BIT);
-    }
-
-    // 3 extra args
-    template<typename A1, typename A2, typename A3>
-    void* callMethod(const char* methodName, const A1& a1, const A2& a2, const A3& a3, int flags) const {
-        return getPropertyObject(methodName).call(h, a1, a2, a3, flags | RBXL_METHOD_ARG_0_IS_SELF_BIT);
-    }
-
-    // 4 extra args
-    template<typename A1, typename A2, typename A3, typename A4>
-    void* callMethod(const char* methodName, const A1& a1, const A2& a2, const A3& a3, const A4& a4, int flags) const {
-        return getPropertyObject(methodName).call(h, a1, a2, a3, a4, flags | RBXL_METHOD_ARG_0_IS_SELF_BIT);
-    }
-
-    // ── Static method call (getPropertyObject + .call, no self) ──
-
-    // 0 extra args
-    void* callMethodStatic(const char* methodName, int flags) const {
-        return getPropertyObject(methodName).call(flags | 256);
-    }
-    // 1 extra arg — const char* (exact match)
-    void* callMethodStatic(const char* methodName, const char* arg, int flags) const {
-        return getPropertyObject(methodName).call(arg, flags | 256);
-    }
-    // 1 extra arg (generic template)
-    template<typename A1>
-    void* callMethodStatic(const char* methodName, const A1& a1, int flags) const {
-        return getPropertyObject(methodName).call(a1, flags | 256);
-    }
-    // 2 extra args
-    template<typename A1, typename A2>
-    void* callMethodStatic(const char* methodName, const A1& a1, const A2& a2, int flags) const {
-        return getPropertyObject(methodName).call(a1, a2, flags | 256);
-    }
-    // 3 extra args
-    template<typename A1, typename A2, typename A3>
-    void* callMethodStatic(const char* methodName, const A1& a1, const A2& a2, const A3& a3, int flags) const {
-        return getPropertyObject(methodName).call(a1, a2, a3, flags | 256);
-    }
-    // 4 extra args
-    template<typename A1, typename A2, typename A3, typename A4>
-    void* callMethodStatic(const char* methodName, const A1& a1, const A2& a2, const A3& a3, const A4& a4, int flags) const {
-        return getPropertyObject(methodName).call(a1, a2, a3, a4, flags | 256);
+    template<typename... Args>
+    void* callMethodStatic(const char* methodName, int flags, const Args&... args) const {
+        return getPropertyObject(methodName).callObj(flags, args...);
     }
 };
 
@@ -697,22 +627,23 @@ struct Buffer {
     Buffer() : size(0) {}
 
     // Read a Luau buffer object (stored in OBJECTS) into this C++ array.
+    // Uses Rbxl::call() (syscall 65, register-based) directly because buffer
+    // operations pass raw integers that cannot be OBJECTS handles.
     void readFromObject(void* objHandle) {
         LuaObj bufferLib = LuaObj::getGlobal("buffer");
 
         // Call buffer.len(bufHandle) to get the size
-        unsigned int len = (unsigned int)(unsigned long)bufferLib.callMethodStatic(
-            "len",
+        unsigned int len = (unsigned int)(unsigned long)Rbxl::call(
+            bufferLib.getPropertyObject("len").handle(),
             objHandle,
             RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT
         );
         size = len < MAX_SIZE ? len : MAX_SIZE;
 
         // Read bytes one by one: buffer.readi8(bufHandle, i)
-        // Only arg1 is a handle; offset (int)i passes as raw register value.
         for (unsigned int i = 0; i < size; i++) {
-            int val = (int)(unsigned long)bufferLib.callMethodStatic(
-                "readi8",
+            int val = (int)(unsigned long)Rbxl::call(
+                bufferLib.getPropertyObject("readi8").handle(),
                 objHandle,
                 (int)i,
                 RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT
@@ -727,18 +658,17 @@ struct Buffer {
     void* toObject() const {
         LuaObj bufferLib = LuaObj::getGlobal("buffer");
 
-        // Create buffer: buffer.create(size) — size is raw int, no OBJECTS flag.
-        void* handle = bufferLib.callMethodStatic(
-            "create",
+        // Create buffer: buffer.create(size) — size is raw int
+        void* handle = Rbxl::call(
+            bufferLib.getPropertyObject("create").handle(),
             (int)size,
             RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT
         );
 
         // Write bytes: buffer.writei8(bufHandle, i, data[i])
-        // Only arg1 is a handle; offset and value are raw ints.
         for (unsigned int i = 0; i < size; i++) {
-            bufferLib.callMethodStatic(
-                "writei8",
+            Rbxl::call(
+                bufferLib.getPropertyObject("writei8").handle(),
                 handle,
                 (int)i,
                 (int)data[i],
@@ -751,124 +681,9 @@ struct Buffer {
     }
 };
 
-// ── Rbxl::call overloads for LuaObj arguments ───────────────────────────────
-//
-// GCC's RISC-V backend rejects class-typed inputs for the "r" register
-// operand constraint ("impossible constraint in 'asm'" / "non-memory input
-// N must stay in memory"). The call() templates above take their user args
-// by `const T&` and pass them through `"r"` to the ecall wrapper. When a
-// LuaObj is passed, the class object cannot live in a single register, so
-// template instantiation with A1=LuaObj (or A2=LuaObj, etc.) fails to
-// compile.
-//
-// To keep call() usable with LuaObj args without rewriting the ecall
-// template body, define non-template overloads that pre-extract the inner
-// handle (a void* primitive) and forward into the existing templates with
-// LuaObj positions substituted by void*. Non-template overloads are
-// preferred by overload resolution over the function templates, so these
-// are selected whenever the corresponding user arg position is a LuaObj.
-//
-// Non-template "all-LuaObj" overloads are still needed at each arity to
-// resolve partial-ordering ambiguity between the partial templates below
-// when multiple LuaObj positions appear in a single call.
-
+// ── _obj_handle(const LuaObj&) — defined after LuaObj class ──
 namespace Rbxl {
-
-// 1 extra arg, A1=LuaObj (non-template beats the function template)
-inline void* call(void* handle, const LuaObj& a1, int flags) {
-    return call<void*>(handle, a1.handle(), flags);
+    inline void* _obj_handle(const LuaObj& obj) { return obj.handle(); }
 }
-
-// 2 extra args, A1=LuaObj, A2=LuaObj
-inline void* call(void* handle, const LuaObj& a1, const LuaObj& a2, int flags) {
-    return call<void*, void*>(handle, a1.handle(), a2.handle(), flags);
-}
-// 2 extra args, A1=LuaObj
-template<typename A2>
-inline void* call(void* handle, const LuaObj& a1, const A2& a2, int flags) {
-    return call<void*, A2>(handle, a1.handle(), a2, flags);
-}
-// 2 extra args, A2=LuaObj
-template<typename A1>
-inline void* call(void* handle, const A1& a1, const LuaObj& a2, int flags) {
-    return call<A1, void*>(handle, a1, a2.handle(), flags);
-}
-
-// 3 extra args, A1=A2=A3=LuaObj
-inline void* call(void* handle, const LuaObj& a1, const LuaObj& a2, const LuaObj& a3, int flags) {
-    return call<void*, void*, void*>(handle, a1.handle(), a2.handle(), a3.handle(), flags);
-}
-// 3 extra args, A1=LuaObj
-template<typename A2, typename A3>
-inline void* call(void* handle, const LuaObj& a1, const A2& a2, const A3& a3, int flags) {
-    return call<void*, A2, A3>(handle, a1.handle(), a2, a3, flags);
-}
-// 3 extra args, A2=LuaObj
-template<typename A1, typename A3>
-inline void* call(void* handle, const A1& a1, const LuaObj& a2, const A3& a3, int flags) {
-    return call<A1, void*, A3>(handle, a1, a2.handle(), a3, flags);
-}
-// 3 extra args, A3=LuaObj
-template<typename A1, typename A2>
-inline void* call(void* handle, const A1& a1, const A2& a2, const LuaObj& a3, int flags) {
-    return call<A1, A2, void*>(handle, a1, a2, a3.handle(), flags);
-}
-
-// 4 extra args, A1=A2=A3=A4=LuaObj
-inline void* call(void* handle, const LuaObj& a1, const LuaObj& a2, const LuaObj& a3, const LuaObj& a4, int flags) {
-    return call<void*, void*, void*, void*>(handle, a1.handle(), a2.handle(), a3.handle(), a4.handle(), flags);
-}
-// 4 extra args, A1=LuaObj
-template<typename A2, typename A3, typename A4>
-inline void* call(void* handle, const LuaObj& a1, const A2& a2, const A3& a3, const A4& a4, int flags) {
-    return call<void*, A2, A3, A4>(handle, a1.handle(), a2, a3, a4, flags);
-}
-// 4 extra args, A2=LuaObj
-template<typename A1, typename A3, typename A4>
-inline void* call(void* handle, const A1& a1, const LuaObj& a2, const A3& a3, const A4& a4, int flags) {
-    return call<A1, void*, A3, A4>(handle, a1, a2.handle(), a3, a4, flags);
-}
-// 4 extra args, A3=LuaObj
-template<typename A1, typename A2, typename A4>
-inline void* call(void* handle, const A1& a1, const A2& a2, const LuaObj& a3, const A4& a4, int flags) {
-    return call<A1, A2, void*, A4>(handle, a1, a2, a3.handle(), a4, flags);
-}
-// 4 extra args, A4=LuaObj
-template<typename A1, typename A2, typename A3>
-inline void* call(void* handle, const A1& a1, const A2& a2, const A3& a3, const LuaObj& a4, int flags) {
-    return call<A1, A2, A3, void*>(handle, a1, a2, a3, a4.handle(), flags);
-}
-
-// 5 extra args, A1=A2=A3=A4=A5=LuaObj
-inline void* call(void* handle, const LuaObj& a1, const LuaObj& a2, const LuaObj& a3, const LuaObj& a4, const LuaObj& a5, int flags) {
-    return call<void*, void*, void*, void*, void*>(handle, a1.handle(), a2.handle(), a3.handle(), a4.handle(), a5.handle(), flags);
-}
-// 5 extra args, A1=LuaObj
-template<typename A2, typename A3, typename A4, typename A5>
-inline void* call(void* handle, const LuaObj& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, int flags) {
-    return call<void*, A2, A3, A4, A5>(handle, a1.handle(), a2, a3, a4, a5, flags);
-}
-// 5 extra args, A2=LuaObj
-template<typename A1, typename A3, typename A4, typename A5>
-inline void* call(void* handle, const A1& a1, const LuaObj& a2, const A3& a3, const A4& a4, const A5& a5, int flags) {
-    return call<A1, void*, A3, A4, A5>(handle, a1, a2.handle(), a3, a4, a5, flags);
-}
-// 5 extra args, A3=LuaObj
-template<typename A1, typename A2, typename A4, typename A5>
-inline void* call(void* handle, const A1& a1, const A2& a2, const LuaObj& a3, const A4& a4, const A5& a5, int flags) {
-    return call<A1, A2, void*, A4, A5>(handle, a1, a2, a3.handle(), a4, a5, flags);
-}
-// 5 extra args, A4=LuaObj
-template<typename A1, typename A2, typename A3, typename A5>
-inline void* call(void* handle, const A1& a1, const A2& a2, const A3& a3, const LuaObj& a4, const A5& a5, int flags) {
-    return call<A1, A2, A3, void*, A5>(handle, a1, a2, a3, a4.handle(), a5, flags);
-}
-// 5 extra args, A5=LuaObj
-template<typename A1, typename A2, typename A3, typename A4>
-inline void* call(void* handle, const A1& a1, const A2& a2, const A3& a3, const A4& a4, const LuaObj& a5, int flags) {
-    return call<A1, A2, A3, A4, void*>(handle, a1, a2, a3, a4, a5.handle(), flags);
-}
-
-} // namespace Rbxl
 
 #endif // RBXL_HPP

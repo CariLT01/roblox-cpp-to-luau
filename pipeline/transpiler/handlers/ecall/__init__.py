@@ -430,6 +430,46 @@ def _handle_ecall(handler_body, current_func, addr_int,
         handler_body.append("        reg[11] = S.NEXT_HANDLE")
         handler_body.append("        S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
 
+    # Syscall 75: payload-stack call — a0 points to a struct in RISC-V memory:
+    #   word 0: (handleCount << 16) | (flags & 0xFFFF)
+    #   word 1: fn handle (OBJECTS index, always present)
+    #   word 2..N+1: argument handles (all OBJECTS indices)
+    # All values are OBJECTS handles — no raw ints, no strings, no function wrappers.
+    elif tracked_a7_syscall == 75:
+        handler_body.append("        local _payload = reg[11]")
+        handler_body.append("        local _header = read_mem32(_payload)")
+        handler_body.append("        local _handleCount = bit32.rshift(_header, 16)")
+        handler_body.append("        local _flags = bit32.band(_header, 0xFFFF)")
+        handler_body.append("        local _fn = OBJECTS[read_mem32(_payload + 4)]")
+        handler_body.append("        if not _fn then")
+        handler_body.append("            warn('[VM] callObj: OBJECTS[payload.fn] is nil')")
+        handler_body.append("            reg[11] = 0")
+        handler_body.append("        else")
+        handler_body.append("            local _args = {}")
+        handler_body.append("            for _i = 0, _handleCount - 1 do")
+        handler_body.append("                local _h = read_mem32(_payload + 8 + _i * 4)")
+        handler_body.append("                _args[_i + 1] = OBJECTS[_h]")
+        handler_body.append("            end")
+        handler_body.append("            local _hasReturn = bit32.band(_flags, 1) ~= 0")
+        handler_body.append("            local _returnIsObj = bit32.band(_flags, 2) ~= 0")
+        handler_body.append("            if _hasReturn then")
+        handler_body.append("                local _r = _fn(table.unpack(_args))")
+        handler_body.append("                if _returnIsObj then")
+        handler_body.append("                    if _r then")
+        handler_body.append("                        OBJECTS[S.NEXT_HANDLE] = _r")
+        handler_body.append("                        reg[11] = S.NEXT_HANDLE")
+        handler_body.append("                        S.NEXT_HANDLE = S.NEXT_HANDLE + 1")
+        handler_body.append("                    else")
+        handler_body.append("                        reg[11] = 0")
+        handler_body.append("                    end")
+        handler_body.append("                else")
+        handler_body.append("                    reg[11] = _r or 0")
+        handler_body.append("                end")
+        handler_body.append("            else")
+        handler_body.append("                _fn(table.unpack(_args))")
+        handler_body.append("            end")
+        handler_body.append("        end")
+
     # Syscall 52: getGlobal(name) — wraps the named Lua global in OBJECTS and returns a handle
     elif is_get_global or tracked_a7_syscall == 52:
         # getGlobal is a SHARED function called from multiple call sites with

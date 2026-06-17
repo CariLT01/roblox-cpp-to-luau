@@ -40,7 +40,7 @@ inline unsigned int base64_decode(const char* input, vector<uint8_t>& output) {
 
     // Call EncodingService:Base64Decode — input is the buffer handle, output is a buffer
     // flags: hasReturn(1) | returnIsObj(2) | arg1IsObj(131072) = 131075
-    void* decodedBuf = encodingSvc.callMethod("Base64Decode", inputBufHandle, 131075);
+    void* decodedBuf = encodingSvc.callMethod("Base64Decode", 131075, inputBufHandle);
 
     Lua::print("Reading buffer into vector");
 

@@ -29,7 +29,7 @@ void printFunc(int threadId) {
         Lua::print("Thread");
         Lua::print(threadId);
         Lua::print(i);
-        task.callMethodStatic("wait", f1f, RBXL_METHOD_ARG_1_IS_OBJECT_BIT);
+        task.callMethodStatic("wait", RBXL_METHOD_ARG_1_IS_OBJECT_BIT, f1f);
     }
 }
 
@@ -45,7 +45,7 @@ int main() {
     LuaObj task = (LuaObj) Rbxl::getGlobal("task");
         
     Lua::print("The start of the program");
-    Lua::print("Version 4");
+    Lua::print("Version 5");
 
     Lua::taskSpawn((void*)printFunc, 1);
     Lua::taskSpawn((void*)printFunc, 2);
@@ -54,8 +54,8 @@ int main() {
     LuaObj rs = (LuaObj) Rbxl::getService("ReplicatedStorage");
     LuaObj sharedStr = LuaObj::fromString("Shared");
     LuaObj helloStr = LuaObj::fromString("Hello");
-    LuaObj shared = (LuaObj) rs.callMethod("FindFirstChild", sharedStr, RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT);
-    LuaObj moduleScript = (LuaObj) shared.callMethod("FindFirstChild", helloStr, RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT);
+    LuaObj shared = (LuaObj) rs.callMethod("FindFirstChild", RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT, sharedStr);
+    LuaObj moduleScript = (LuaObj) shared.callMethod("FindFirstChild", RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT, helloStr);
     LuaObj module = (LuaObj)((LuaObj) Rbxl::getGlobal("require")).call(moduleScript, RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT);
     module.callMethodStatic("Hello", 0);
     Lua::print("Module already called!");
@@ -65,7 +65,7 @@ int main() {
 
     LuaObj workspace = (LuaObj) Rbxl::getService("Workspace");
     LuaObj baseplateStr = LuaObj::fromString("Baseplate");
-    LuaObj baseplate = (LuaObj) workspace.callMethod("FindFirstChild", baseplateStr, RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT);
+    LuaObj baseplate = (LuaObj) workspace.callMethod("FindFirstChild", RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT, baseplateStr);
 
     
     LuaObj prop = baseplate.getPropertyObject("Position");
@@ -86,7 +86,7 @@ int main() {
 
     LuaObj touchedEvent = baseplate.getMethod("Touched");
     LuaObj callbackHandle = LuaObj::fromFunction((void*)touchedCallback);
-    touchedEvent.callMethod("Connect", callbackHandle, RBXL_METHOD_ARG_1_IS_OBJECT_BIT);
+    touchedEvent.callMethod("Connect", RBXL_METHOD_ARG_1_IS_OBJECT_BIT, callbackHandle);
 
 
 
@@ -97,13 +97,13 @@ int main() {
     LuaObj o2f = LuaObj::fromFloat(2.0f);
     LuaObj o0f = LuaObj::fromFloat(0.0f);
 
-    task.callMethodStatic("wait", o1f, RBXL_METHOD_ARG_1_IS_OBJECT_BIT);
+    task.callMethodStatic("wait", RBXL_METHOD_ARG_1_IS_OBJECT_BIT, o1f);
     //Lua::taskSpawn((void*)printFunc, 2);
 
-    task.callMethodStatic("wait", o2f, RBXL_METHOD_ARG_1_IS_OBJECT_BIT);
+    task.callMethodStatic("wait", RBXL_METHOD_ARG_1_IS_OBJECT_BIT, o2f);
     Lua::print("Finished wait! Doing work!");
     
-    task.callMethodStatic("wait", o1f, RBXL_METHOD_ARG_1_IS_OBJECT_BIT);
+    task.callMethodStatic("wait", RBXL_METHOD_ARG_1_IS_OBJECT_BIT, o1f);
 
     vector<uint8_t> decoded;
     base64_decode(imageData, decoded);
@@ -162,7 +162,7 @@ int main() {
         Lua::print("Cursor, targetEndCursor");
         Lua::print(cursor);
         Lua::print(targetEndCursor);
-        task.callMethodStatic("wait", o0f, RBXL_METHOD_ARG_1_IS_OBJECT_BIT);
+        task.callMethodStatic("wait", RBXL_METHOD_ARG_1_IS_OBJECT_BIT, o0f);
 
         LuaObj instance = (LuaObj)Rbxl::getGlobal("Instance");
         LuaObj partStr = LuaObj::fromString("Part");
@@ -223,7 +223,7 @@ int main() {
             // Lua::print("Create part");
             LuaObj part;
             if (shapeType == 0) {
-                part = (LuaObj) instance.callMethodStatic("new", partStr, RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT);
+                part = (LuaObj) instance.callMethodStatic("new", RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT, partStr);
                 Vector3 sizeV3 = Vector3{wP, hP, 0.001};
                 LuaObj sizeObj = (LuaObj)sizeV3.toObject();
                 part.setPropertyObject("Size", sizeObj);
@@ -235,7 +235,7 @@ int main() {
                 partCreated = true;
                 
             } else if (shapeType == 1) {
-                part = (LuaObj) instance.callMethodStatic("new", partStr, RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT);
+                part = (LuaObj) instance.callMethodStatic("new", RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT, partStr);
 
 
 
@@ -254,7 +254,7 @@ int main() {
                 part.setPropertyObject("CFrame", cfObj);
                 partCreated = true;
             } else if (shapeType == 2) {
-                part = (LuaObj) instance.callMethodStatic("new", wedgePartStr, RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT);
+                part = (LuaObj) instance.callMethodStatic("new", RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT, wedgePartStr);
 
                 Vector3 sizeVec = Vector3{0.001, wP, hP};
                 LuaObj sizeObj = (LuaObj)sizeVec.toObject();
