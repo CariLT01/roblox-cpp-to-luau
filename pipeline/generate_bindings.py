@@ -312,29 +312,9 @@ def flags_to_macro_expr(flags):
     """
     if flags == 0:
         return "0"
-    FLAG_BIT_MACROS = {
-        0:  "RBXL_METHOD_HAS_RETURN_BIT",
-        1:  "RBXL_METHOD_RETURN_IS_OBJ_BIT",
-        2:  "RBXL_METHOD_CALL_TARGET_IS_SERVICE_BIT",
-        3:  "RBXL_METHOD_ARG_1_IS_STRING_BIT",
-        4:  "RBXL_METHOD_ARG_2_IS_STRING_BIT",
-        5:  "RBXL_METHOD_RETURN_IS_BUFFER_BIT",
-        6:  "RBXL_METHOD_ARG_3_IS_STRING_BIT",
-        7:  "RBXL_METHOD_ARG_4_IS_STRING_BIT",
-        8:  "RBXL_METHOD_IS_STATIC_BIT",
-        9:  "RBXL_METHOD_ARG_1_IS_BUFFER_BIT",
-        10: "RBXL_METHOD_ARG_2_IS_BUFFER_BIT",
-        11: "RBXL_METHOD_ARG_3_IS_BUFFER_BIT",
-        12: "RBXL_METHOD_ARG_4_IS_BUFFER_BIT",
-        13: "RBXL_METHOD_ARG_1_IS_FUNCTION_BIT",
-        14: "RBXL_METHOD_ARG_2_IS_FUNCTION_BIT",
-        15: "RBXL_METHOD_ARG_3_IS_FUNCTION_BIT",
-        16: "RBXL_METHOD_ARG_4_IS_FUNCTION_BIT",
-        17: "RBXL_METHOD_ARG_1_IS_OBJECT_BIT",
-        18: "RBXL_METHOD_ARG_2_IS_OBJECT_BIT",
-        19: "RBXL_METHOD_ARG_3_IS_OBJECT_BIT",
-        20: "RBXL_METHOD_ARG_4_IS_OBJECT_BIT",
-    }
+FLAG_BIT_MACROS = {
+    0:  "RBXL_METHOD_HAS_RETURN_BIT",
+}
     parts = []
     for bit, macro in sorted(FLAG_BIT_MACROS.items()):
         if flags & (1 << bit):

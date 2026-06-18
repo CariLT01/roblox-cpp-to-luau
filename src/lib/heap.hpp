@@ -12,34 +12,40 @@ namespace Rbxl {
     // Syscall 30: Allocate 'size' bytes from the virtual heap, returns pointer or null (0)
     void* malloc(unsigned int size) {
         void* ptr = nullptr;
+#ifdef __riscv
         asm volatile (
             "mv a0, %1; li a7, 30; ecall; mv %0, a0"
             : "=r"(ptr)
             : "r"(size)
             : "a0", "a7"
         );
+#endif
         return ptr;
     }
 
     // Syscall 31: Free a previously allocated heap pointer
     void free(void* ptr) {
+#ifdef __riscv
         asm volatile (
             "mv a0, %0; li a7, 31; ecall"
             :
             : "r"(ptr)
             : "a0", "a7"
         );
+#endif
     }
 
     // Syscall 32: Get current virtual heap usage in bytes
     unsigned int heapUsed() {
         unsigned int result = 0;
+#ifdef __riscv
         asm volatile (
             "li a7, 32; ecall; mv %0, a0"
             : "=r"(result)
             :
             : "a0", "a7"
         );
+#endif
         return result;
     }
 }

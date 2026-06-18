@@ -15,34 +15,15 @@
 #include "math.hpp"
 #include "enums.hpp"
 
-// ── callMethod flags ─────────────────────────────────────────────────────────
+// ── callObj flags (payload-based call, syscall 75) ──────────────────────────
 //
-// These flags serve two different syscalls:
-//   syscall 65 (register-based, used by Buffer): uses ALL flag bits
-//   syscall 75 (payload-based, used by LuaObj): only uses bits 0-1 (return type)
+// callObj uses a payload buffer: [header(4B) | fnHandle(4B) | argHandles...]
+// The header encodes (handleCount << 16) | (flags & 0xFFFF).
+// Only bit 0 is meaningful; all other flags were for the removed
+// register-based call (syscall 65) and are now dead.
+// All return values are always OBJECTS handles.
 //
-#define RBXL_METHOD_HAS_RETURN_BIT            (1 << 0)
-#define RBXL_METHOD_RETURN_IS_OBJ_BIT         (1 << 1)
-#define RBXL_METHOD_CALL_TARGET_IS_SERVICE_BIT (1 << 2)
-#define RBXL_METHOD_ARG_1_IS_STRING_BIT       (1 << 3)
-#define RBXL_METHOD_ARG_2_IS_STRING_BIT       (1 << 4)
-#define RBXL_METHOD_RETURN_IS_BUFFER_BIT      (1 << 5)
-#define RBXL_METHOD_ARG_3_IS_STRING_BIT       (1 << 6)
-#define RBXL_METHOD_ARG_4_IS_STRING_BIT       (1 << 7)
-#define RBXL_METHOD_IS_STATIC_BIT             (1 << 8)
-#define RBXL_METHOD_ARG_1_IS_BUFFER_BIT       (1 << 9)
-#define RBXL_METHOD_ARG_2_IS_BUFFER_BIT       (1 << 10)
-#define RBXL_METHOD_ARG_3_IS_BUFFER_BIT       (1 << 11)
-#define RBXL_METHOD_ARG_4_IS_BUFFER_BIT       (1 << 12)
-#define RBXL_METHOD_ARG_1_IS_FUNCTION_BIT     (1 << 13)
-#define RBXL_METHOD_ARG_2_IS_FUNCTION_BIT     (1 << 14)
-#define RBXL_METHOD_ARG_3_IS_FUNCTION_BIT     (1 << 15)
-#define RBXL_METHOD_ARG_4_IS_FUNCTION_BIT     (1 << 16)
-#define RBXL_METHOD_ARG_1_IS_OBJECT_BIT       (1 << 17)
-#define RBXL_METHOD_ARG_2_IS_OBJECT_BIT       (1 << 18)
-#define RBXL_METHOD_ARG_3_IS_OBJECT_BIT       (1 << 19)
-#define RBXL_METHOD_ARG_4_IS_OBJECT_BIT       (1 << 20)
-#define RBXL_METHOD_ARG_0_IS_SELF_BIT         (1 << 21)  // callMethod prepends self; a1=object, user args start at a2
+#define RBXL_METHOD_HAS_RETURN_BIT            (1 << 0)  // call returns a value (always an OBJECTS handle)
 
 
 // ── C++ struct types (math on heap, bridge to/from OBJECTS) ──────────────────
@@ -52,24 +33,28 @@ struct Vector3 {
     Vector3() : x(0), y(0), z(0) {}
     Vector3(float x_, float y_, float z_) : x(x_), y(y_), z(z_) {}
 
-    // Syscall 54: Read Vector3 from OBJECTS[handle] into *this (OBJECTS → C++ struct)
+    // objectRead 78: Read Vector3 (type_id=0) from OBJECTS[handle] into *this
     void readFromObject(void* objHandle) {
+#ifdef __riscv
         asm volatile (
-            "mv a0, %0; mv a1, %1; li a7, 54; ecall"
+            "mv a0, %0; li a1, 0; mv a2, %1; li a7, 78; ecall"
             :
             : "r"(objHandle), "r"(this)
-            : "a0", "a1", "a7", "memory"
+            : "a0", "a1", "a2", "a7", "memory"
         );
+#endif
     }
-    // Syscall 55: Store this Vector3 into OBJECTS, return handle (C++ struct → OBJECTS)
+    // objectWrite 79: Store this Vector3 (type_id=0) into OBJECTS, return handle
     void* toObject() const {
-        void* handle;
+        void* handle = nullptr;
+#ifdef __riscv
         asm volatile (
-            "mv a0, %1; li a7, 55; ecall; mv %0, a0"
+            "mv a0, %1; li a1, 0; li a7, 79; ecall; mv %0, a0"
             : "=r"(handle)
             : "r"(this)
-            : "a0", "a7", "memory"
+            : "a0", "a1", "a7", "memory"
         );
+#endif
         return handle;
     }
 };
@@ -79,24 +64,28 @@ struct Color3 {
     Color3() : r(0), g(0), b(0) {}
     Color3(float r_, float g_, float b_) : r(r_), g(g_), b(b_) {}
 
-    // Syscall 58: Read Color3 from OBJECTS[handle] into *this
+    // objectRead 78: Read Color3 (type_id=2) from OBJECTS[handle] into *this
     void readFromObject(void* objHandle) {
+#ifdef __riscv
         asm volatile (
-            "mv a0, %0; mv a1, %1; li a7, 58; ecall"
+            "mv a0, %0; li a1, 2; mv a2, %1; li a7, 78; ecall"
             :
             : "r"(objHandle), "r"(this)
-            : "a0", "a1", "a7", "memory"
+            : "a0", "a1", "a2", "a7", "memory"
         );
+#endif
     }
-    // Syscall 59: Store this Color3 into OBJECTS, return handle
+    // objectWrite 79: Store this Color3 (type_id=2) into OBJECTS, return handle
     void* toObject() const {
-        void* handle;
+        void* handle = nullptr;
+#ifdef __riscv
         asm volatile (
-            "mv a0, %1; li a7, 59; ecall; mv %0, a0"
+            "mv a0, %1; li a1, 2; li a7, 79; ecall; mv %0, a0"
             : "=r"(handle)
             : "r"(this)
-            : "a0", "a7", "memory"
+            : "a0", "a1", "a7", "memory"
         );
+#endif
         return handle;
     }
 };
@@ -105,24 +94,28 @@ struct Color3 {
 struct UDim2 {
     float d[4];
 
-    // Syscall 60: Read UDim2 from OBJECTS[handle] into *this
+    // objectRead 78: Read UDim2 (type_id=3) from OBJECTS[handle] into *this
     void readFromObject(void* objHandle) {
+#ifdef __riscv
         asm volatile (
-            "mv a0, %0; mv a1, %1; li a7, 60; ecall"
+            "mv a0, %0; li a1, 3; mv a2, %1; li a7, 78; ecall"
             :
             : "r"(objHandle), "r"(this)
-            : "a0", "a1", "a7", "memory"
+            : "a0", "a1", "a2", "a7", "memory"
         );
+#endif
     }
-    // Syscall 61: Store this UDim2 into OBJECTS, return handle
+    // objectWrite 79: Store this UDim2 (type_id=3) into OBJECTS, return handle
     void* toObject() const {
-        void* handle;
+        void* handle = nullptr;
+#ifdef __riscv
         asm volatile (
-            "mv a0, %1; li a7, 61; ecall; mv %0, a0"
+            "mv a0, %1; li a1, 3; li a7, 79; ecall; mv %0, a0"
             : "=r"(handle)
             : "r"(this)
-            : "a0", "a7", "memory"
+            : "a0", "a1", "a7", "memory"
         );
+#endif
         return handle;
     }
 
@@ -142,24 +135,28 @@ struct UDim2 {
 struct CFrame {
     float d[12];
 
-    // Syscall 56: Read CFrame from OBJECTS[handle] into *this
+    // objectRead 78: Read CFrame (type_id=1) from OBJECTS[handle] into *this
     void readFromObject(void* objHandle) {
+#ifdef __riscv
         asm volatile (
-            "mv a0, %0; mv a1, %1; li a7, 56; ecall"
+            "mv a0, %0; li a1, 1; mv a2, %1; li a7, 78; ecall"
             :
             : "r"(objHandle), "r"(this)
-            : "a0", "a1", "a7", "memory"
+            : "a0", "a1", "a2", "a7", "memory"
         );
+#endif
     }
-    // Syscall 57: Store this CFrame into OBJECTS, return handle
+    // objectWrite 79: Store this CFrame (type_id=1) into OBJECTS, return handle
     void* toObject() const {
-        void* handle;
+        void* handle = nullptr;
+#ifdef __riscv
         asm volatile (
-            "mv a0, %1; li a7, 57; ecall; mv %0, a0"
+            "mv a0, %1; li a1, 1; li a7, 79; ecall; mv %0, a0"
             : "=r"(handle)
             : "r"(this)
-            : "a0", "a7", "memory"
+            : "a0", "a1", "a7", "memory"
         );
+#endif
         return handle;
     }
 
@@ -267,21 +264,24 @@ class LuaObj;
 
 namespace Rbxl {
 
-    // ── Math Operations ──
+    // ── Math Operations (universal handle API) ──
+    // Calls math.rad()/sin()/cos() via: read float → objectWrite (79) →
+    // getGlobal("math") (52) → getPropertyObject (62) → callObj (75) →
+    // objectRead (78) → write float back.
 
-    // Syscall 39: rad — convert degrees to radians in-place at *ptr
     void rad(void* ptr) {
-        asm volatile ("mv a0, %0; li a7, 39; ecall" : : "r"(ptr) : "a0", "a7", "memory");
+        float val = *(float*)ptr;
+        *(float*)ptr = math::detail::_math_op("rad", val);
     }
 
-    // Syscall 40: sin — replace *ptr with sin(*ptr)
     void sin(void* ptr) {
-        asm volatile ("mv a0, %0; li a7, 40; ecall" : : "r"(ptr) : "a0", "a7", "memory");
+        float val = *(float*)ptr;
+        *(float*)ptr = math::detail::_math_op("sin", val);
     }
 
-    // Syscall 41: cos — replace *ptr with cos(*ptr)
     void cos(void* ptr) {
-        asm volatile ("mv a0, %0; li a7, 41; ecall" : : "r"(ptr) : "a0", "a7", "memory");
+        float val = *(float*)ptr;
+        *(float*)ptr = math::detail::_math_op("cos", val);
     }
 
     // ── Object Property Access (the ONLY two property syscalls) ──
@@ -289,18 +289,24 @@ namespace Rbxl {
     // Syscall 62: getPropertyObject(handle, propName) — returns any property as an object handle
     void* getPropertyObject(void* handle, const char* propName) {
         void* result = nullptr;
+#ifdef __riscv
         asm volatile ("mv a0, %1; mv a1, %2; li a7, 62; ecall; mv %0, a0" : "=r"(result) : "r"(handle), "r"(propName) : "a0", "a1", "a7");
+#endif
         return result;
     }
 
     // Syscall 63: setPropertyObject(handle, propName, valueHandle) — sets a property from an OBJECTS handle
     void setPropertyObject(void* handle, const char* propName, void* valueHandle) {
+#ifdef __riscv
         asm volatile ("mv a0, %0; mv a1, %1; mv a2, %2; li a7, 63; ecall" : : "r"(handle), "r"(propName), "r"(valueHandle) : "a0", "a1", "a2", "a7");
+#endif
     }
 
     // Syscall 64: releaseObject(handle) — removes an entry from OBJECTS without destroying the Instance
     void releaseObject(void* handle) {
+#ifdef __riscv
         asm volatile ("mv a0, %0; li a7, 64; ecall" : : "r"(handle) : "a0", "a7");
+#endif
     }
 
     // ── Enum ↔ OBJECTS bridge (syscalls 42/43) ──
@@ -309,7 +315,9 @@ namespace Rbxl {
     // Looks up ENUMS[index + 1], stores the Roblox EnumItem in OBJECTS, returns handle.
     void* fromEnum(int enumIndex) {
         void* handle = nullptr;
+#ifdef __riscv
         asm volatile ("mv a0, %1; li a7, 42; ecall; mv %0, a0" : "=r"(handle) : "r"(enumIndex) : "a0", "a7");
+#endif
         return handle;
     }
 
@@ -317,7 +325,9 @@ namespace Rbxl {
     // Looks up OBJECTS[handle] in ENUM_TO_INDEX, returns the index.
     int toEnum(void* handle) {
         int result = 0;
+#ifdef __riscv
         asm volatile ("mv a0, %1; li a7, 43; ecall; mv %0, a0" : "=r"(result) : "r"(handle) : "a0", "a7");
+#endif
         return result;
     }
 
@@ -326,80 +336,37 @@ namespace Rbxl {
     // Syscall 47: getService(name) — returns raw handle to any Roblox service instance
     void* getService(const char* name) {
         void* handle = nullptr;
+#ifdef __riscv
         asm volatile ("mv a0, %1; li a7, 47; ecall; mv %0, a0" : "=r"(handle) : "r"(name) : "a0", "a7");
+#endif
         return handle;
     }
 
     // Syscall 52: getGlobal(name) — returns the named Lua global as a handle
     void* getGlobal(const char* name) {
         void* handle = nullptr;
+#ifdef __riscv
         asm volatile ("mv a0, %1; li a7, 52; ecall; mv %0, a0" : "=r"(handle) : "r"(name) : "a0", "a7");
+#endif
         return handle;
     }
 
     // Syscall 51: getMethod(handle, methodName) — returns RBXScriptSignal handle
     void* getMethod(void* handle, const char* methodName) {
         void* result = nullptr;
+#ifdef __riscv
         asm volatile ("mv a0, %1; mv a1, %2; li a7, 51; ecall; mv %0, a0" : "=r"(result) : "r"(handle), "r"(methodName) : "a0", "a1", "a7");
+#endif
         return result;
     }
 
     // Syscall 53: require — requires a ModuleScript instance, returns handle
     void* require(void* moduleHandle) {
         void* handle = nullptr;
+#ifdef __riscv
         asm volatile ("mv a0, %1; li a7, 53; ecall; mv %0, a0" : "=r"(handle) : "r"(moduleHandle) : "a0", "a7");
+#endif
         return handle;
-    }
-
-        // ── Syscall 65: register-based call (used by Buffer for raw-int passthrough) ──
-    // Kept for Buffer operations that need to pass raw integers (offsets, sizes).
-    // All other call sites should use callObj (syscall 75) instead.
-
-    // 0 extra args
-    void* call(void* handle, int flags) {
-        void* result = nullptr;
-        asm volatile (
-            "mv a0, %1; mv a3, %2; addi a1, x0, -1; addi a2, x0, -1; addi a4, x0, -1; addi a5, x0, -1; addi a6, x0, -1; li a7, 65; ecall; mv %0, a0"
-            : "=r"(result) : "r"(handle), "r"(flags)
-            : "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7"
-        );
-        return result;
-    }
-
-    // 1 extra arg
-    template<typename A1>
-    void* call(void* handle, const A1& a1, int flags) {
-        void* result = nullptr;
-        asm volatile (
-            "mv a0, %1; mv a1, %2; mv a3, %3; addi a2, x0, -1; addi a4, x0, -1; addi a5, x0, -1; addi a6, x0, -1; li a7, 65; ecall; mv %0, a0"
-            : "=r"(result) : "r"(handle), "r"(a1), "r"(flags)
-            : "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7"
-        );
-        return result;
-    }
-
-    // 2 extra args
-    template<typename A1, typename A2>
-    void* call(void* handle, const A1& a1, const A2& a2, int flags) {
-        void* result = nullptr;
-        asm volatile (
-            "mv a0, %1; mv a1, %2; mv a2, %3; mv a3, %4; addi a4, x0, -1; addi a5, x0, -1; addi a6, x0, -1; li a7, 65; ecall; mv %0, a0"
-            : "=r"(result) : "r"(handle), "r"(a1), "r"(a2), "r"(flags)
-            : "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7"
-        );
-        return result;
-    }
-
-    // 3 extra args
-    template<typename A1, typename A2, typename A3>
-    void* call(void* handle, const A1& a1, const A2& a2, const A3& a3, int flags) {
-        void* result = nullptr;
-        asm volatile (
-            "mv a0, %1; mv a1, %2; mv a2, %3; mv a3, %5; mv a4, %4; addi a5, x0, -1; addi a6, x0, -1; li a7, 65; ecall; mv %0, a0"
-            : "=r"(result) : "r"(handle), "r"(a1), "r"(a2), "r"(a3), "r"(flags)
-            : "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7"
-        );
-        return result;
     }
 
     // ── Syscall 75: payload-stack call — all args are OBJECTS handles ──
@@ -425,13 +392,15 @@ namespace Rbxl {
 
         unsigned int* p = (unsigned int*)__builtin_alloca(totalSize);
         p[0] = (((unsigned int)N) << 16) | ((unsigned int)flags & 0xFFFF);
-        p[1] = (unsigned int)(unsigned long)fnHandle;
+        p[1] = (unsigned int)(uintptr_t)fnHandle;
         int i = 2;
-        ((p[i++] = (unsigned int)(unsigned long)_obj_handle(args)), ...);
+        ((p[i++] = (unsigned int)(uintptr_t)_obj_handle(args)), ...);
 
-        void* result;
+        void* result = nullptr;
+#ifdef __riscv
         asm volatile("mv a0, %1; li a7, 75; ecall; mv %0, a0"
             : "=r"(result) : "r"(p) : "a0", "a7", "memory");
+#endif
         return result;
     }
 
@@ -494,53 +463,69 @@ public:
     // ── Primitive conversions (no new syscalls — transpiler detects by function name) ──
 
     static LuaObj fromFloat(float f) {
-        void* handle;
-        asm volatile("mv a0, %1; li a7, 66; ecall; mv %0, a0" : "=r"(handle) : "r"(f) : "a0", "a7");
+        void* handle = nullptr;
+#ifdef __riscv
+        asm volatile("mv a0, %1; li a1, 4; li a7, 79; ecall; mv %0, a0" : "=r"(handle) : "r"(f) : "a0", "a1", "a7");
+#endif
         return LuaObj(handle);
     }
     static LuaObj fromInt(int i) {
-        void* handle;
-        asm volatile("mv a0, %1; li a7, 67; ecall; mv %0, a0" : "=r"(handle) : "r"(i) : "a0", "a7");
+        void* handle = nullptr;
+#ifdef __riscv
+        asm volatile("mv a0, %1; li a1, 5; li a7, 79; ecall; mv %0, a0" : "=r"(handle) : "r"(i) : "a0", "a1", "a7");
+#endif
         return LuaObj(handle);
     }
     static LuaObj fromBool(bool b) {
-        void* handle;
-        asm volatile("mv a0, %1; li a7, 68; ecall; mv %0, a0" : "=r"(handle) : "r"((int)b) : "a0", "a7");
+        void* handle = nullptr;
+#ifdef __riscv
+        asm volatile("mv a0, %1; li a1, 6; li a7, 79; ecall; mv %0, a0" : "=r"(handle) : "r"((int)b) : "a0", "a1", "a7");
+#endif
         return LuaObj(handle);
     }
     static LuaObj fromString(const char* s) {
-        void* handle;
-        asm volatile("mv a0, %1; li a7, 69; ecall; mv %0, a0" : "=r"(handle) : "r"(s) : "a0", "a7");
+        void* handle = nullptr;
+#ifdef __riscv
+        asm volatile("mv a0, %1; li a1, 7; li a7, 79; ecall; mv %0, a0" : "=r"(handle) : "r"(s) : "a0", "a1", "a7");
+#endif
         return LuaObj(handle);
     }
-    // Syscall 74: fromFunction(void* funcAddr) — wraps a C++ function address
-    // in a callable Luau function and stores it in OBJECTS, returning a handle.
-    // The handle can then be used with call() / callMethod() / callMethodStatic()
-    // just like any other object handle.
+    // objectWrite 79: fromFunction(type_id=8) — wraps C++ function address
+    // in a callable Luau function, stores in OBJECTS, returns handle.
     static LuaObj fromFunction(void* funcAddr) {
-        void* handle;
-        asm volatile("mv a0, %1; li a7, 74; ecall; mv %0, a0" : "=r"(handle) : "r"(funcAddr) : "a0", "a7");
+        void* handle = nullptr;
+#ifdef __riscv
+        asm volatile("mv a0, %1; li a1, 8; li a7, 79; ecall; mv %0, a0" : "=r"(handle) : "r"(funcAddr) : "a0", "a1", "a7");
+#endif
         return LuaObj(handle);
     }
 
     float toFloat() const {
-        float result;
-        asm volatile("mv a0, %1; li a7, 70; ecall; mv %0, a0" : "=r"(result) : "r"(h) : "a0", "a7");
+        float result = 0.0f;
+#ifdef __riscv
+        asm volatile("mv a0, %1; li a1, 4; li a7, 78; ecall; mv %0, a0" : "=r"(result) : "r"(h) : "a0", "a1", "a7");
+#endif
         return result;
     }
     int toInt() const {
-        int result;
-        asm volatile("mv a0, %1; li a7, 71; ecall; mv %0, a0" : "=r"(result) : "r"(h) : "a0", "a7");
+        int result = 0;
+#ifdef __riscv
+        asm volatile("mv a0, %1; li a1, 5; li a7, 78; ecall; mv %0, a0" : "=r"(result) : "r"(h) : "a0", "a1", "a7");
+#endif
         return result;
     }
     bool toBool() const {
-        int result;
-        asm volatile("mv a0, %1; li a7, 72; ecall; mv %0, a0" : "=r"(result) : "r"(h) : "a0", "a7");
+        int result = 0;
+#ifdef __riscv
+        asm volatile("mv a0, %1; li a1, 6; li a7, 78; ecall; mv %0, a0" : "=r"(result) : "r"(h) : "a0", "a1", "a7");
+#endif
         return result != 0;
     }
     const char* toString() const {
-        void* result;
-        asm volatile("mv a0, %1; li a7, 73; ecall; mv %0, a0" : "=r"(result) : "r"(h) : "a0", "a7");
+        void* result = nullptr;
+#ifdef __riscv
+        asm volatile("mv a0, %1; li a1, 7; li a7, 78; ecall; mv %0, a0" : "=r"(result) : "r"(h) : "a0", "a1", "a7");
+#endif
         return (const char*)result;
     }
 
@@ -571,34 +556,6 @@ public:
         return Rbxl::callObj(h, flags, args...);
     }
 
-    // ── Legacy .call() — delegates to callObj() ──
-    // Kept for compatibility.  Flags are passed as the LAST argument matching
-    // the old API shape: obj.call(arg1, arg2, flags).
-
-    void* call(int flags) const {
-        return callObj(flags);
-    }
-    template<typename A1>
-    void* call(const A1& a1, int flags) const {
-        return callObj(flags, a1);
-    }
-    template<typename A1, typename A2>
-    void* call(const A1& a1, const A2& a2, int flags) const {
-        return callObj(flags, a1, a2);
-    }
-    template<typename A1, typename A2, typename A3>
-    void* call(const A1& a1, const A2& a2, const A3& a3, int flags) const {
-        return callObj(flags, a1, a2, a3);
-    }
-    template<typename A1, typename A2, typename A3, typename A4>
-    void* call(const A1& a1, const A2& a2, const A3& a3, const A4& a4, int flags) const {
-        return callObj(flags, a1, a2, a3, a4);
-    }
-    template<typename A1, typename A2, typename A3, typename A4, typename A5>
-    void* call(const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5, int flags) const {
-        return callObj(flags, a1, a2, a3, a4, a5);
-    }
-
     // ── Method call (getPropertyObject + callObj) ──
     // callMethod: prepends self (this->h) as first arg, then user args
     // callMethodStatic: no self prepended
@@ -618,7 +575,9 @@ public:
 };
 
 // ── Buffer: fixed-size byte array bridging C++ ↔ Luau buffer objects ──────
-// Uses the universal handle API (getGlobal + callMethodStatic) — no buffer syscalls.
+// Uses the universal handle API: LuaObj::getGlobal + getPropertyObject + callObj.
+// Raw ints (offsets, sizes, byte values) are converted to OBJECTS handles via
+// LuaObj::fromInt / toInt.
 struct Buffer {
     static const int MAX_SIZE = 65536;  // 64KB, same as a memory page
     uint8_t data[MAX_SIZE];
@@ -627,28 +586,32 @@ struct Buffer {
     Buffer() : size(0) {}
 
     // Read a Luau buffer object (stored in OBJECTS) into this C++ array.
-    // Uses Rbxl::call() (syscall 65, register-based) directly because buffer
-    // operations pass raw integers that cannot be OBJECTS handles.
     void readFromObject(void* objHandle) {
         LuaObj bufferLib = LuaObj::getGlobal("buffer");
 
-        // Call buffer.len(bufHandle) to get the size
-        unsigned int len = (unsigned int)(unsigned long)Rbxl::call(
-            bufferLib.getPropertyObject("len").handle(),
-            objHandle,
-            RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT
-        );
-        size = len < MAX_SIZE ? len : MAX_SIZE;
-
-        // Read bytes one by one: buffer.readi8(bufHandle, i)
-        for (unsigned int i = 0; i < size; i++) {
-            int val = (int)(unsigned long)Rbxl::call(
-                bufferLib.getPropertyObject("readi8").handle(),
-                objHandle,
-                (int)i,
-                RBXL_METHOD_ARG_1_IS_OBJECT_BIT | RBXL_METHOD_HAS_RETURN_BIT
+        // buffer.len(objHandle)
+        {
+            LuaObj result = LuaObj::fromHandle(
+                bufferLib.getPropertyObject("len").callObj(
+                    RBXL_METHOD_HAS_RETURN_BIT,
+                    objHandle
+                )
             );
-            data[i] = (uint8_t)val;
+            unsigned int len = (unsigned int)result.toInt();
+            size = len < MAX_SIZE ? len : MAX_SIZE;
+        }
+
+        // buffer.readi8(objHandle, offset) per byte
+        LuaObj readi8Fn = bufferLib.getPropertyObject("readi8");
+        for (unsigned int i = 0; i < size; i++) {
+            LuaObj result = LuaObj::fromHandle(
+                readi8Fn.callObj(
+                    RBXL_METHOD_HAS_RETURN_BIT,
+                    objHandle,
+                    LuaObj::fromInt((int)i).handle()
+                )
+            );
+            data[i] = (uint8_t)result.toInt();
         }
 
         bufferLib.release();
@@ -658,21 +621,20 @@ struct Buffer {
     void* toObject() const {
         LuaObj bufferLib = LuaObj::getGlobal("buffer");
 
-        // Create buffer: buffer.create(size) — size is raw int
-        void* handle = Rbxl::call(
-            bufferLib.getPropertyObject("create").handle(),
-            (int)size,
-            RBXL_METHOD_HAS_RETURN_BIT | RBXL_METHOD_RETURN_IS_OBJ_BIT
+        // buffer.create(size)
+        void* handle = bufferLib.getPropertyObject("create").callObj(
+            RBXL_METHOD_HAS_RETURN_BIT,
+            LuaObj::fromInt((int)size).handle()
         );
 
-        // Write bytes: buffer.writei8(bufHandle, i, data[i])
+        // buffer.writei8(handle, offset, byte) per byte
+        LuaObj writei8Fn = bufferLib.getPropertyObject("writei8");
         for (unsigned int i = 0; i < size; i++) {
-            Rbxl::call(
-                bufferLib.getPropertyObject("writei8").handle(),
+            writei8Fn.callObj(
+                0,  // no return
                 handle,
-                (int)i,
-                (int)data[i],
-                RBXL_METHOD_ARG_1_IS_OBJECT_BIT
+                LuaObj::fromInt((int)i).handle(),
+                LuaObj::fromInt((int)data[i]).handle()
             );
         }
 
